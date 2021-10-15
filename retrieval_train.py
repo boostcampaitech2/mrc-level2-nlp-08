@@ -1,5 +1,5 @@
 import argparse
-from .retrieval_model import BertEncoder, ElectraEncoder
+from retrieval_model import BertEncoder, ElectraEncoder
 from utils import seed_everything
 from datasets import load_from_disk
 from transformers import (
@@ -21,7 +21,7 @@ def to_cuda(batch):
 
 def get_tensor_dataset(data_path: str, max_seq_length: int, tokenizer) -> TensorDataset:
     """
-    question과 context를 tokenize 한 수 TensorDataset으로 concat하여 return합니다.
+    question과 context를 tokenize 한 후 TensorDataset으로 concat하여 return합니다.
     """
     dataset = load_from_disk(data_path)
     q_seqs = tokenizer(
