@@ -123,6 +123,7 @@ def train(args, p_encoder, q_encoder, train_dataset, valid_dataset):
 
     best_loss = 9999  # valid_loss
     num_epoch = 0
+    train_loss = 0
     for _ in range(int(args.num_train_epochs)):
         epoch_iterator = tqdm(train_dataloader, desc="Iteration")
         num_epoch += 1
@@ -161,6 +162,7 @@ def train(args, p_encoder, q_encoder, train_dataset, valid_dataset):
 
             sim_scores = F.log_softmax(sim_scores, dim=1)
             loss = F.nll_loss(sim_scores, targets)
+            train_loss += loss.item()
 
             loss.backward()
             optimizer.step()
@@ -170,8 +172,6 @@ def train(args, p_encoder, q_encoder, train_dataset, valid_dataset):
             global_step += 1
 
             torch.cuda.empty_cache()
-        print(loss)
-
         # validation
         v_epoch_iterator = tqdm(valid_dataloader, desc="Iteration")
         valid_loss = 0
@@ -204,9 +204,14 @@ def train(args, p_encoder, q_encoder, train_dataset, valid_dataset):
                 loss = F.nll_loss(sim_scores, targets)
 
                 valid_loss += loss
+
+        train_loss = train_loss / len(train_dataloader)
         valid_loss = valid_loss / len(valid_dataloader)
+        print(f"train loss: {train_loss}")
         print(f"valid loss: {valid_loss}")
 
+        # valid_loss가 작아질 때만 저장
+        # 두 모델을 합쳐서 trainer에 넘겨줄 수 있게 만들면 좀더 간단해질듯
         if best_loss > valid_loss:
             p_encoder.save_pretrained(args.output_dir + "/p_encoder")
             q_encoder.save_pretrained(args.output_dir + "/q_encoder")
@@ -226,6 +231,10 @@ def main(args):
 
     p_encoder = ElectraEncoder.from_pretrained(args.model_checkpoint)
     q_encoder = ElectraEncoder.from_pretrained(args.model_checkpoint)
+    """
+    https://github.com/bcaitech1/p3-mrc-team-ikyo/blob/main/code/retrieval_model.py를 참고하면 별개의 Encoder를 하나로 통합 할 수 있을 듯
+    변경 한다면 train 함수의 save_pretreained를 save_state_dict로 수정하여야함
+    """
 
     training_args = TrainingArguments(
         output_dir=args.output_dir,
@@ -266,7 +275,7 @@ if __name__ == "__main__":
     parser.add_argument("--learning_rate", type=float, default=5e-5)
     parser.add_argument("--per_device_train_batch_size", type=int, default=16)
     parser.add_argument("--per_device_eval_batch_size", type=int, default=16)
-    parser.add_argument("--num_train_epochs", type=int, default=5)
+    parser.add_argument("--num_train_epochs", type=int, default=10)
     parser.add_argument("--weight_decay", type=float, default=0.01)
 
     args = parser.parse_args()
