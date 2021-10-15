@@ -34,7 +34,6 @@ class SparseRetrieval:
         data_path: Optional[str] = "../data/",
         context_path: Optional[str] = "wikipedia_documents.json",
     ) -> NoReturn:
-
         """
         Arguments:
             tokenize_fn:
@@ -77,7 +76,6 @@ class SparseRetrieval:
         self.indexer = None  # build_faiss()로 생성합니다.
 
     def get_sparse_embedding(self) -> NoReturn:
-
         """
         Summary:
             Passage Embedding을 만들고
@@ -108,7 +106,6 @@ class SparseRetrieval:
             print("Embedding pickle saved.")
 
     def build_faiss(self, num_clusters=64) -> NoReturn:
-
         """
         Summary:
             속성으로 저장되어 있는 Passage Embedding을
@@ -147,7 +144,6 @@ class SparseRetrieval:
     def retrieve(
         self, query_or_dataset: Union[str, Dataset], topk: Optional[int] = 1
     ) -> Union[Tuple[List, List], pd.DataFrame]:
-
         """
         Arguments:
             query_or_dataset (Union[str, Dataset]):
@@ -171,7 +167,8 @@ class SparseRetrieval:
         assert self.p_embedding is not None, "get_sparse_embedding() 메소드를 먼저 수행해줘야합니다."
 
         if isinstance(query_or_dataset, str):
-            doc_scores, doc_indices = self.get_relevant_doc(query_or_dataset, k=topk)
+            doc_scores, doc_indices = self.get_relevant_doc(
+                query_or_dataset, k=topk)
             print("[Search query]\n", query_or_dataset, "\n")
 
             for i in range(topk):
@@ -211,7 +208,6 @@ class SparseRetrieval:
             return cqas
 
     def get_relevant_doc(self, query: str, k: Optional[int] = 1) -> Tuple[List, List]:
-
         """
         Arguments:
             query (str):
@@ -241,7 +237,6 @@ class SparseRetrieval:
     def get_relevant_doc_bulk(
         self, queries: List, k: Optional[int] = 1
     ) -> Tuple[List, List]:
-
         """
         Arguments:
             queries (List):
@@ -260,18 +255,26 @@ class SparseRetrieval:
         result = query_vec * self.p_embedding.T
         if not isinstance(result, np.ndarray):
             result = result.toarray()
-        doc_scores = []
-        doc_indices = []
-        for i in range(result.shape[0]):
-            sorted_result = np.argsort(result[i, :])[::-1]
-            doc_scores.append(result[i, :][sorted_result].tolist()[:k])
-            doc_indices.append(sorted_result.tolist()[:k])
+
+        # numpy partition
+        doc_scores = np.partition(result, -k)[:, -k:][:, ::-1]
+        ind = np.argsort(doc_scores, axis=-1)[:, ::-1]
+        doc_scores = np.sort(doc_scores, axis=-1)[:, ::-1]
+        doc_indices = np.argpartition(result, -k)[:, -k:][:, ::-1]
+        r, c = ind.shape
+        ind = ind + np.tile(np.arange(r).reshape(-1, 1), (1, c)) * c
+        doc_indices = doc_indices.ravel()[ind].reshape(r, c)
+        # doc_scores = []
+        # doc_indices = []
+        # for i in range(result.shape[0]):
+        #     sorted_result = np.argsort(result[i, :])[::-1]
+        #     doc_scores.append(result[i, :][sorted_result].tolist()[:k])
+        #     doc_indices.append(sorted_result.tolist()[:k])
         return doc_scores, doc_indices
 
     def retrieve_faiss(
         self, query_or_dataset: Union[str, Dataset], topk: Optional[int] = 1
     ) -> Union[Tuple[List, List], pd.DataFrame]:
-
         """
         Arguments:
             query_or_dataset (Union[str, Dataset]):
@@ -302,7 +305,8 @@ class SparseRetrieval:
             print("[Search query]\n", query_or_dataset, "\n")
 
             for i in range(topk):
-                print("Top-%d passage with score %.4f" % (i + 1, doc_scores[i]))
+                print("Top-%d passage with score %.4f" %
+                      (i + 1, doc_scores[i]))
                 print(self.contexts[doc_indices[i]])
 
             return (doc_scores, [self.contexts[doc_indices[i]] for i in range(topk)])
@@ -341,7 +345,6 @@ class SparseRetrieval:
     def get_relevant_doc_faiss(
         self, query: str, k: Optional[int] = 1
     ) -> Tuple[List, List]:
-
         """
         Arguments:
             query (str):
@@ -366,7 +369,6 @@ class SparseRetrieval:
     def get_relevant_doc_bulk_faiss(
         self, queries: List, k: Optional[int] = 1
     ) -> Tuple[List, List]:
-
         """
         Arguments:
             queries (List):
@@ -447,7 +449,8 @@ if __name__ == "__main__":
             df = retriever.retrieve_faiss(full_ds)
             df["correct"] = df["original_context"] == df["context"]
 
-            print("correct retrieval result by faiss", df["correct"].sum() / len(df))
+            print("correct retrieval result by faiss",
+                  df["correct"].sum() / len(df))
 
     else:
         with timer("bulk query by exhaustive search"):

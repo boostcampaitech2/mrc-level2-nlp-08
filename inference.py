@@ -104,7 +104,8 @@ def main():
 
     # eval or predict mrc model
     if training_args.do_eval or training_args.do_predict:
-        run_mrc(data_args, training_args, model_args, datasets, tokenizer, model)
+        run_mrc(data_args, training_args, model_args,
+                datasets, tokenizer, model)
 
 
 def run_sparse_retrieval(
@@ -128,7 +129,8 @@ def run_sparse_retrieval(
             datasets["validation"], topk=data_args.top_k_retrieval
         )
     else:
-        df = retriever.retrieve(datasets["validation"], topk=data_args.top_k_retrieval)
+        df = retriever.retrieve(
+            datasets["validation"], topk=data_args.top_k_retrieval)
 
     # test data 에 대해선 정답이 없으므로 id question context 로만 데이터셋이 구성됩니다.
     if training_args.do_predict:
@@ -198,7 +200,8 @@ def run_mrc(
             stride=data_args.doc_stride,
             return_overflowing_tokens=True,
             return_offsets_mapping=True,
-            #return_token_type_ids=False, # roberta모델을 사용할 경우 False, bert를 사용할 경우 True로 표기해야합니다.
+            # roberta모델을 사용할 경우 False, bert를 사용할 경우 True로 표기해야합니다.
+            return_token_type_ids=False,
             padding="max_length" if data_args.pad_to_max_length else False,
         )
 
@@ -216,7 +219,8 @@ def run_mrc(
 
             # 하나의 example이 여러개의 span을 가질 수 있습니다.
             sample_index = sample_mapping[i]
-            tokenized_examples["example_id"].append(examples["id"][sample_index])
+            tokenized_examples["example_id"].append(
+                examples["id"][sample_index])
 
             # context의 일부가 아닌 offset_mapping을 None으로 설정하여 토큰 위치가 컨텍스트의 일부인지 여부를 쉽게 판별할 수 있습니다.
             tokenized_examples["offset_mapping"][i] = [
@@ -296,7 +300,7 @@ def run_mrc(
 
     logger.info("*** Evaluate ***")
 
-    #### eval dataset & eval example - predictions.json 생성됨
+    # eval dataset & eval example - predictions.json 생성됨
     if training_args.do_predict:
         predictions = trainer.predict(
             test_dataset=eval_dataset, test_examples=datasets["validation"]

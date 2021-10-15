@@ -18,6 +18,7 @@ from transformers import (
 
 from tokenizers import Tokenizer
 from tokenizers.models import WordPiece
+from transformers.utils.dummy_pt_objects import GPT2Model
 
 from utils_qa import postprocess_qa_predictions, check_no_error
 from trainer_qa import QuestionAnsweringTrainer
@@ -26,8 +27,12 @@ from retrieval import SparseRetrieval
 from arguments import (
     ModelArguments,
     DataTrainingArguments,
+    MyTrainingArguments
 )
 
+import wandb
+import torch
+import torch.nn as nn
 
 logger = logging.getLogger(__name__)
 
@@ -35,9 +40,17 @@ logger = logging.getLogger(__name__)
 def main():
     # 가능한 arguments 들은 ./arguments.py 나 transformer package 안의 src/transformers/training_args.py 에서 확인 가능합니다.
     # --help flag 를 실행시켜서 확인할 수 도 있습니다.
+    os.environ["WANDB_DISABLED"] = "true"
+    # wandb.init(
+    #     project="MRC_baseline",
+    #     entity="chungye-mountain-sherpa",
+    #     name="default settings",
+    #     group=model_args.model_name_or_path
+    # )
 
     parser = HfArgumentParser(
-        (ModelArguments, DataTrainingArguments, TrainingArguments)
+        # (ModelArguments, DataTrainingArguments, TrainingArguments)
+        (ModelArguments, DataTrainingArguments, MyTrainingArguments)
     )
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
     print(model_args.model_name_or_path)
@@ -45,6 +58,16 @@ def main():
     # [참고] argument를 manual하게 수정하고 싶은 경우에 아래와 같은 방식을 사용할 수 있습니다
     # training_args.per_device_train_batch_size = 4
     # print(training_args.per_device_train_batch_size)
+
+    # training_args.per_device_train_batch_size = 16
+    # training_args.per_device_eval_batch_size = 16
+    # training_args.num_train_epochs = 10
+    # training_args.fp16 = True
+    # training_args.fp16_opt_level = 'O1'
+    # training_args.logging_steps = 500
+    # training_args.eval_steps = 500
+    # training_args.save_steps = 500
+    # training_args.save_total_limit = 2
 
     print(f"model is from {model_args.model_name_or_path}")
     print(f"data is from {data_args.dataset_name}")
@@ -97,7 +120,8 @@ def main():
 
     # do_train mrc model 혹은 do_eval mrc model
     if training_args.do_train or training_args.do_eval:
-        run_mrc(data_args, training_args, model_args, datasets, tokenizer, model)
+        run_mrc(data_args, training_args, model_args,
+                datasets, tokenizer, model)
 
 
 def run_mrc(
@@ -107,6 +131,8 @@ def run_mrc(
     datasets: DatasetDict,
     tokenizer,
     model,
+
+
 ) -> NoReturn:
 
     # dataset을 전처리합니다.
@@ -141,7 +167,8 @@ def run_mrc(
             stride=data_args.doc_stride,
             return_overflowing_tokens=True,
             return_offsets_mapping=True,
-            # return_token_type_ids=False, # roberta모델을 사용할 경우 False, bert를 사용할 경우 True로 표기해야합니다.
+            # roberta모델을 사용할 경우 False, bert를 사용할 경우 True로 표기해야합니다.
+            return_token_type_ids=False,
             padding="max_length" if data_args.pad_to_max_length else False,
         )
 
@@ -200,10 +227,12 @@ def run_mrc(
                         and offsets[token_start_index][0] <= start_char
                     ):
                         token_start_index += 1
-                    tokenized_examples["start_positions"].append(token_start_index - 1)
+                    tokenized_examples["start_positions"].append(
+                        token_start_index - 1)
                     while offsets[token_end_index][1] >= end_char:
                         token_end_index -= 1
-                    tokenized_examples["end_positions"].append(token_end_index + 1)
+                    tokenized_examples["end_positions"].append(
+                        token_end_index + 1)
 
         return tokenized_examples
 
@@ -233,7 +262,8 @@ def run_mrc(
             stride=data_args.doc_stride,
             return_overflowing_tokens=True,
             return_offsets_mapping=True,
-            #return_token_type_ids=False, # roberta모델을 사용할 경우 False, bert를 사용할 경우 True로 표기해야합니다.
+            # roberta모델을 사용할 경우 False, bert를 사용할 경우 True로 표기해야합니다.
+            return_token_type_ids=False,
             padding="max_length" if data_args.pad_to_max_length else False,
         )
 
@@ -251,7 +281,8 @@ def run_mrc(
 
             # 하나의 example이 여러개의 span을 가질 수 있습니다.
             sample_index = sample_mapping[i]
-            tokenized_examples["example_id"].append(examples["id"][sample_index])
+            tokenized_examples["example_id"].append(
+                examples["id"][sample_index])
 
             # Set to None the offset_mapping을 None으로 설정해서 token position이 context의 일부인지 쉽게 판별 할 수 있습니다.
             tokenized_examples["offset_mapping"][i] = [
@@ -311,7 +342,7 @@ def run_mrc(
         return metric.compute(predictions=p.predictions, references=p.label_ids)
 
     # Trainer 초기화
-    trainer = QuestionAnsweringTrainer( 
+    trainer = QuestionAnsweringTrainer(
         model=model,
         args=training_args,
         train_dataset=train_dataset if training_args.do_train else None,
@@ -341,7 +372,8 @@ def run_mrc(
         trainer.save_metrics("train", metrics)
         trainer.save_state()
 
-        output_train_file = os.path.join(training_args.output_dir, "train_results.txt")
+        output_train_file = os.path.join(
+            training_args.output_dir, "train_results.txt")
 
         with open(output_train_file, "w") as writer:
             logger.info("***** Train results *****")
