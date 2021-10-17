@@ -16,92 +16,117 @@
 Question-Answering task와 관련된 'Trainer'의 subclass 코드 입니다.
 """
 
-from transformers import Trainer, is_datasets_available, is_torch_tpu_available
-from transformers.trainer_utils import PredictionOutput
-
+from typing import Dict, List, Optional
+from transformers import Trainer, is_datasets_available
+from transformers.trainer_utils import (
+    PredictionOutput,
+    speed_metrics,
+    EvalPrediction,
+)
+import time
+import math
+from torch.utils.data import DataLoader, Dataset
 
 if is_datasets_available():
     import datasets
 
-# Huggingface의 Trainer를 상속받아 QuestionAnswering을 위한 Trainer를 생성합니다.
+
+# NOTE
+from utils_qa import postprocess_qa_predictions, check_no_error
 
 
 class QuestionAnsweringTrainer(Trainer):
-    def __init__(self, *args, eval_examples=None, post_process_function=None, **kwargs):
+    def __init__(self, *args, data_args, eval_examples=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.eval_examples = eval_examples
-        self.post_process_function = post_process_function
+        self.data_args = data_args
 
-    def evaluate(self, eval_dataset=None, eval_examples=None, ignore_keys=None):
-        eval_dataset = self.eval_dataset if eval_dataset is None else eval_dataset
+    def post_processing(self, predictions, phase="train"):
+        predictions = postprocess_qa_predictions(
+            examples=self.eval_examples,
+            features=self.eval_dataset,
+            predictions=predictions,
+            max_answer_length=self.data_args.max_answer_length,
+            output_dir=self.args.output_dir,
+            prefix=None if phase == "train" else str(self.data_args.top_k_retrieval),
+        )
+        formatted_predictions = [{"id": k, "prediction_text": v} for k, v in predictions.items()]
+        if phase == "test":
+            return formatted_predictions
+        references = [{"id": ex["id"], "answers": ex["answers"]} for ex in self.eval_examples]
+        return EvalPrediction(predictions=formatted_predictions, label_ids=references)
+
+    def evaluate(
+        self,
+        eval_dataset: Optional[Dataset] = None,
+        ignore_keys: Optional[List[str]] = None,
+        metric_key_prefix: str = "eval",
+    ) -> Dict[str, float]:
+
+        self._memory_tracker.start()
+
         eval_dataloader = self.get_eval_dataloader(eval_dataset)
-        eval_examples = self.eval_examples if eval_examples is None else eval_examples
+        start_time = time.time()
 
-        # 일시적으로 metric computation를 불가능하게 한 상태이며, 해당 코드에서는 loop 내에서 metric 계산을 수행합니다.
-        compute_metrics = self.compute_metrics
-        self.compute_metrics = None
-        try:
-            output = self.prediction_loop(
-                eval_dataloader,
-                description="Evaluation",
-                # metric이 없으면 예측값을 모으는 이유가 없으므로 아래의 코드를 따르게 됩니다.
-                # self.args.prediction_loss_only
-                prediction_loss_only=True if compute_metrics is None else None,
-                ignore_keys=ignore_keys,
-            )
-        finally:
-            self.compute_metrics = compute_metrics
+        eval_loop = self.prediction_loop if self.args.use_legacy_prediction_loop else self.evaluation_loop
 
-        if isinstance(eval_dataset, datasets.Dataset):
-            eval_dataset.set_format(
-                type=eval_dataset.format["type"],
-                columns=list(eval_dataset.features.keys()),
-            )
-
-        if self.post_process_function is not None and self.compute_metrics is not None:
-            eval_preds = self.post_process_function(
-                eval_examples, eval_dataset, output.predictions, self.args
-            )
-            metrics = self.compute_metrics(eval_preds)
-
-            self.log(metrics)
-        else:
-            metrics = {}
-
-        self.control = self.callback_handler.on_evaluate(
-            self.args, self.state, self.control, metrics
+        output = eval_loop(
+            eval_dataloader,
+            description="Evaluation",
+            prediction_loss_only=True if self.compute_metrics is None else None,
+            ignore_keys=ignore_keys,
+            metric_key_prefix=metric_key_prefix,
         )
-        return metrics
 
-    def predict(self, test_dataset, test_examples, ignore_keys=None):
+        if self.post_processing is not None and self.compute_metrics is not None:
+            eval_preds = self.post_processing(output.predictions)
+            squad_metrics = self.compute_metrics(eval_preds)
+            squad_metrics = {"eval_" + k: v for k, v in squad_metrics.items()}
+            output.metrics.update(squad_metrics)
+
+        total_batch_size = self.args.eval_batch_size * self.args.world_size
+        output.metrics.update(
+            speed_metrics(
+                metric_key_prefix,
+                start_time,
+                num_samples=output.num_samples,
+                num_steps=math.ceil(output.num_samples / total_batch_size),
+            )
+        )
+
+        self.log(output.metrics)
+        self.control = self.callback_handler.on_evaluate(self.args, self.state, self.control, output.metrics)
+        self._memory_tracker.stop_and_update_metrics(output.metrics)
+        return output.metrics
+
+    def predict(
+        self, test_dataset: Dataset, ignore_keys: Optional[List[str]] = None, metric_key_prefix: str = "test"
+    ) -> PredictionOutput:
+
+        self._memory_tracker.start()
+
         test_dataloader = self.get_test_dataloader(test_dataset)
+        start_time = time.time()
 
-        # 일시적으로 metric computation를 불가능하게 한 상태이며, 해당 코드에서는 loop 내에서 metric 계산을 수행합니다.
-        # evaluate 함수와 동일하게 구성되어있습니다
-        compute_metrics = self.compute_metrics
-        self.compute_metrics = None
-        try:
-            output = self.prediction_loop(
-                test_dataloader,
-                description="Evaluation",
-                # metric이 없으면 예측값을 모으는 이유가 없으므로 아래의 코드를 따르게 됩니다.
-                # self.args.prediction_loss_only
-                prediction_loss_only=True if compute_metrics is None else None,
-                ignore_keys=ignore_keys,
-            )
-        finally:
-            self.compute_metrics = compute_metrics
-
-        if self.post_process_function is None or self.compute_metrics is None:
-            return output
-
-        if isinstance(test_dataset, datasets.Dataset):
-            test_dataset.set_format(
-                type=test_dataset.format["type"],
-                columns=list(test_dataset.features.keys()),
-            )
-
-        predictions = self.post_process_function(
-            test_examples, test_dataset, output.predictions, self.args
+        eval_loop = self.prediction_loop if self.args.use_legacy_prediction_loop else self.evaluation_loop
+        output = eval_loop(
+            test_dataloader,
+            description="Prediction",
+            ignore_keys=ignore_keys,
+            metric_key_prefix=metric_key_prefix,
         )
+
+        total_batch_size = self.args.eval_batch_size * self.args.world_size
+        output.metrics.update(
+            speed_metrics(
+                metric_key_prefix,
+                start_time,
+                num_samples=output.num_samples,
+                num_steps=math.ceil(output.num_samples / total_batch_size),
+            )
+        )
+
+        self._memory_tracker.stop_and_update_metrics(output.metrics)
+
+        predictions = self.post_processing(output.predictions, phase="test")
         return predictions
