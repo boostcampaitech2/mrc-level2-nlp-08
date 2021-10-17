@@ -1,10 +1,3 @@
-"""
-Open-Domain Question Answering 을 수행하는 inference 코드 입니다.
-
-대부분의 로직은 train.py 와 비슷하나 retrieval, predict 부분이 추가되어 있습니다.
-"""
-
-
 import logging
 import sys
 from typing import Callable, List, Dict, NoReturn, Tuple
@@ -12,7 +5,6 @@ from typing import Callable, List, Dict, NoReturn, Tuple
 import numpy as np
 
 from datasets import (
-    load_metric,
     load_from_disk,
     Sequence,
     Value,
@@ -20,27 +12,23 @@ from datasets import (
     Dataset,
     DatasetDict,
 )
-from torch.utils import data
 
 from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
 
 from transformers import (
     DataCollatorWithPadding,
-    EvalPrediction,
     HfArgumentParser,
     TrainingArguments,
     set_seed,
 )
 
-# from utils_qa import postprocess_qa_predictions, check_no_error
-from utils_qa import (
-    postprocess_qa_predictions,
-    find_last_checkpoint,
+from utils import (
     check_and_get_max_sequence_length,
     check_no_error,
 )
-from trainer_qa import QuestionAnsweringTrainer
+from trainer import QuestionAnsweringTrainer
 from retrieval import SparseRetrieval
+from model.metric import compute_metrics
 
 from arguments import (
     ModelArguments,
@@ -237,11 +225,6 @@ def inference(
     # flag가 True이면 이미 max length로 padding된 상태입니다.
     # 그렇지 않다면 data collator에서 padding을 진행해야합니다.
     data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=8 if training_args.fp16 else None)
-
-    metric = load_metric("squad")
-
-    def compute_metrics(p: EvalPrediction) -> Dict:
-        return metric.compute(predictions=p.predictions, references=p.label_ids)
 
     print("init trainer...")
     # Trainer 초기화

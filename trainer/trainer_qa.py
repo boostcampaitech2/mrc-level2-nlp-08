@@ -12,9 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""
-Question-Answering task와 관련된 'Trainer'의 subclass 코드 입니다.
-"""
 
 from typing import Dict, List, Optional
 from transformers import Trainer, is_datasets_available
@@ -30,9 +27,7 @@ from torch.utils.data import DataLoader, Dataset
 if is_datasets_available():
     import datasets
 
-
-# NOTE
-from utils_qa import postprocess_qa_predictions, check_no_error
+from utils import postprocess_qa_predictions
 
 
 class QuestionAnsweringTrainer(Trainer):

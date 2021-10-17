@@ -1,4 +1,4 @@
-from utils_qa import check_and_get_max_sequence_length
+from utils import check_and_get_max_sequence_length
 
 
 def make_datasets(datasets, tokenizer, training_args, data_args):

@@ -4,32 +4,28 @@ import sys
 
 from typing import List, Callable, NoReturn, NewType, Any
 import dataclasses
-from datasets import load_metric, load_from_disk, Dataset, DatasetDict
+from datasets import load_from_disk
 
 from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
 
 from transformers import (
     DataCollatorWithPadding,
-    EvalPrediction,
     HfArgumentParser,
-    TrainingArguments,
     set_seed,
 )
 
 from tokenizers import Tokenizer
 from tokenizers.models import WordPiece
 
-from utils_qa import find_last_checkpoint, postprocess_qa_predictions, check_no_error
-from trainer_qa import QuestionAnsweringTrainer
+from utils import find_last_checkpoint, check_no_error
+from trainer import QuestionAnsweringTrainer
 from retrieval import SparseRetrieval
-
 from arguments import ModelArguments, DataTrainingArguments, MyTrainingArguments
+from preprocess import make_datasets
+from model.metric import compute_metrics
 
 import wandb
-import torch
-import torch.nn as nn
 
-from preprocess import make_datasets
 
 logger = logging.getLogger(__name__)
 
@@ -43,11 +39,6 @@ def main(args):
     )
 
     train(args)
-
-
-def compute_metrics(p: EvalPrediction):
-    metric = load_metric("squad")
-    return metric.compute(predictions=p.predictions, references=p.label_ids)
 
 
 def train(args):
