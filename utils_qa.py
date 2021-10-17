@@ -279,13 +279,9 @@ def postprocess_qa_predictions(
     return all_predictions
 
 
-def check_no_error(
-    data_args: DataTrainingArguments,
+def find_last_checkpoint(
     training_args: TrainingArguments,
-    datasets: DatasetDict,
-    tokenizer,
-) -> Tuple[Any, int]:
-
+):
     # last checkpoint 찾기.
     last_checkpoint = None
     if (
@@ -304,6 +300,26 @@ def check_no_error(
                 f"Checkpoint detected, resuming training at {last_checkpoint}. To avoid this behavior, change "
                 "the `--output_dir` or add `--overwrite_output_dir` to train from scratch."
             )
+    return last_checkpoint
+
+
+def check_and_get_max_sequence_length(
+    data_args: DataTrainingArguments,
+    tokenizer,
+):
+    if data_args.max_seq_length > tokenizer.model_max_length:
+        logger.warn(
+            f"The max_seq_length passed ({data_args.max_seq_length}) is larger than the maximum length for the"
+            f"model ({tokenizer.model_max_length}). Using max_seq_length={tokenizer.model_max_length}."
+        )
+    max_seq_length = min(data_args.max_seq_length, tokenizer.model_max_length)
+    return max_seq_length
+
+
+def check_no_error(
+    datasets: DatasetDict,
+    tokenizer,
+) -> Tuple[Any, int]:
 
     # Tokenizer check: 해당 script는 Fast tokenizer를 필요로합니다.
     if not isinstance(tokenizer, PreTrainedTokenizerFast):
@@ -313,13 +329,7 @@ def check_no_error(
             "requirement"
         )
 
-    if data_args.max_seq_length > tokenizer.model_max_length:
-        logger.warn(
-            f"The max_seq_length passed ({data_args.max_seq_length}) is larger than the maximum length for the"
-            f"model ({tokenizer.model_max_length}). Using max_seq_length={tokenizer.model_max_length}."
-        )
-    max_seq_length = min(data_args.max_seq_length, tokenizer.model_max_length)
-
     if "validation" not in datasets:
         raise ValueError("--do_eval requires a validation dataset")
-    return last_checkpoint, max_seq_length
+
+    return None

@@ -32,7 +32,13 @@ from transformers import (
     set_seed,
 )
 
-from utils_qa import postprocess_qa_predictions, check_no_error
+# from utils_qa import postprocess_qa_predictions, check_no_error
+from utils_qa import (
+    postprocess_qa_predictions,
+    find_last_checkpoint,
+    check_and_get_max_sequence_length,
+    check_no_error,
+)
 from trainer_qa import QuestionAnsweringTrainer
 from retrieval import SparseRetrieval
 
@@ -173,7 +179,8 @@ def inference(
     pad_on_right = tokenizer.padding_side == "right"
 
     # 오류가 있는지 확인합니다.
-    last_checkpoint, max_seq_length = check_no_error(data_args, training_args, datasets, tokenizer)
+    check_no_error(datasets, tokenizer)
+    max_seq_length = check_and_get_max_sequence_length(data_args, tokenizer)
 
     # Validation preprocessing / 전처리를 진행합니다.
     def prepare_validation_features(examples):
