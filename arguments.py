@@ -200,7 +200,7 @@ class DataTrainingArguments:
         default=True,
         metadata={"help": "Whether to run passage retrieval using sparse embedding."},
     )
-    num_clusters: int = field(default=64, metadata={"help": "Define how many clusters to use for faiss."})
+    num_clusters: int = field(default=5, metadata={"help": "Define how many clusters to use for faiss."})
     top_k_retrieval: int = field(
         default=15,
         metadata={"help": "Define how many top-k passages to retrieve based on similarity."},
