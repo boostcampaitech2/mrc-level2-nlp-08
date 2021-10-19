@@ -17,8 +17,34 @@ class SettingsArguments:
 
 @dataclass
 class Arguments(TrainingArguments):
+    per_device_train_batch_size: int = field(
+        default=14, metadata={"help": "Batch size per GPU/TPU core/CPU for training."}
+    )
+    per_device_eval_batch_size: int = field(
+        default=14, metadata={"help": "Batch size per GPU/TPU core/CPU for evaluation."}
+    )
+    gradient_accumulation_steps: int = field(
+        default=8,
+        metadata={"help": "Number of updates steps to accumulate before performing a backward/update pass."},
+    )
+    learning_rate: float = field(
+        default=6.819759978366989e-06, metadata={"help": "The initial learning rate for AdamW."}
+    )
+    weight_decay: float = field(
+        default=0.17537006645417813, metadata={"help": "Weight decay for AdamW if we apply some."}
+    )
+    num_train_epochs: float = field(
+        default=20.0, metadata={"help": "Total number of training epochs to perform."}
+    )
+    seed: int = field(
+        default=21, metadata={"help": "Random seed that will be set at the beginning of training."}
+    )
+    do_train: bool = field(default=False, metadata={"help": "Whether to run training."})
+    do_eval: bool = field(default=False, metadata={"help": "Whether to run eval on the dev set."})
+    do_predict: bool = field(default=False, metadata={"help": "Whether to run predictions on the test set."})
+
     output_dir: str = field(
-        default="output",
+        default="outputs",
         metadata={
             "help": "The output directory where the model predictions and checkpoints will be written."
         },
@@ -32,23 +58,9 @@ class Arguments(TrainingArguments):
             )
         },
     )
-
-    do_train: bool = field(default=True, metadata={"help": "Whether to run training."})
-    do_eval: bool = field(default=True, metadata={"help": "Whether to run eval on the dev set."})
     evaluation_strategy: IntervalStrategy = field(
         default="epoch",
         metadata={"help": "The evaluation strategy to use."},
-    )
-
-    per_device_train_batch_size: int = field(
-        default=16, metadata={"help": "Batch size per GPU/TPU core/CPU for training."}
-    )
-    per_device_eval_batch_size: int = field(
-        default=16, metadata={"help": "Batch size per GPU/TPU core/CPU for evaluation."}
-    )
-
-    num_train_epochs: float = field(
-        default=0.1, metadata={"help": "Total number of training epochs to perform."}
     )
 
     save_strategy: IntervalStrategy = field(
@@ -56,7 +68,7 @@ class Arguments(TrainingArguments):
         metadata={"help": "The checkpoint save strategy to use."},
     )
     save_total_limit: Optional[int] = field(
-        default=1,
+        default=20,
         metadata={
             "help": (
                 "Limit the total amount of checkpoints."
@@ -69,6 +81,16 @@ class Arguments(TrainingArguments):
         default=True,
         metadata={"help": "Whether to use 16-bit (mixed) precision instead of 32-bit"},
     )
+    metric_for_best_model: Optional[str] = field(
+        default="eval_exact_match", metadata={"help": "The metric to use to compare two different models."}
+    )
+    load_best_model_at_end: Optional[bool] = field(
+        default=True,
+        metadata={
+            "help": "Whether or not to load the best model found during training at the end of training."
+        },
+    )
+
     pad_to_multiple_of: int = field(default=8, metadata={"help": "Pad to multiple of set number"})
 
     max_length: Optional[int] = field(default=384)
