@@ -1,3 +1,6 @@
+from abc import abstractclassmethod, abstractmethod
+
+
 def send_along(func, sent_along):
     def inner(*args, **kwargs):
         return func(sent_along, *args, **kwargs)
