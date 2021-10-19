@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from importlib.metadata import metadata
 from typing import Optional
 
 from transformers import TrainingArguments
@@ -78,10 +79,11 @@ class Arguments(TrainingArguments):
     max_answer_length: int = field(
         default=30,
         metadata={
-            "help": "The maximum length of an answer that can be generated. This is needed because the start "
-            "and end predictions are not conditioned on one another."
+            "help": "The maximum length of an answer tokens that can be generated."
+            "This is needed because the start and end predictions are not conditioned on one another."
         },
     )
+    num_max_prediction: int = field(default=20)
     eval_retrieval: bool = field(
         default=True,
         metadata={"help": "Whether to run passage retrieval using sparse embedding."},
