@@ -48,6 +48,9 @@ def preprocess(args, examples):
         examples["start_positions"].append(answer_token_start_idx)
         examples["end_positions"].append(answer_token_end_idx)
 
+    args.token_type_ids = examples["token_type_ids"]
+    if "roberta" in args.config.model_type.lower():
+        examples.pop("token_type_ids")
     return examples
 
 

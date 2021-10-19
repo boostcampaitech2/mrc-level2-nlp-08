@@ -19,10 +19,10 @@ from utils import send_along
 
 
 def train(settings, args):
-    config = AutoConfig.from_pretrained(settings.pretrained_model_name_or_path)
-    args.tokenizer = AutoTokenizer.from_pretrained(settings.pretrained_model_name_or_path, use_fast=True)
+    args.config = AutoConfig.from_pretrained(settings.pretrained_model_name_or_path)
+    args.tokenizer = AutoTokenizer.from_pretrained(settings.pretrained_model_name_or_path)
     model = AutoModelForQuestionAnswering.from_pretrained(
-        settings.pretrained_model_name_or_path, config=config
+        settings.pretrained_model_name_or_path, config=args.config
     )
     data_collator = DataCollatorWithPadding(
         tokenizer=args.tokenizer, pad_to_multiple_of=args.pad_to_multiple_of if args.fp16 else None
