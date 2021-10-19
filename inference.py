@@ -29,6 +29,7 @@ from utils import (
 from trainer import QuestionAnsweringTrainer
 from retrieval import SparseRetrieval
 from model.metric import compute_metrics
+from model.model import LSTMRobertaForQuestionAnswering
 
 from arguments import (
     ModelArguments,
@@ -76,9 +77,13 @@ def main():
         model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
         use_fast=True,
     )
-    model = AutoModelForQuestionAnswering.from_pretrained(
-        model_args.model_name_or_path,
-        from_tf=bool(".ckpt" in model_args.model_name_or_path),
+    # model = AutoModelForQuestionAnswering.from_pretrained(
+    #     model_args.model_name_or_path,
+    #     from_tf=bool(".ckpt" in model_args.model_name_or_path),
+    #     config=config,
+    # )
+    model = LSTMRobertaForQuestionAnswering(
+        model_name_or_path=model_args.model_name_or_path,
         config=config,
     )
 

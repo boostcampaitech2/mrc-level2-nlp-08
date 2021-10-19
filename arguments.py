@@ -19,10 +19,10 @@ class MyTrainingArguments(TrainingArguments):
         },
     )
     per_device_train_batch_size: int = field(
-        default=64, metadata={"help": "Batch size per GPU/TPU core/CPU for training."}
+        default=16, metadata={"help": "Batch size per GPU/TPU core/CPU for training."}
     )
     per_device_eval_batch_size: int = field(
-        default=64, metadata={"help": "Batch size per GPU/TPU core/CPU for evaluation."}
+        default=16, metadata={"help": "Batch size per GPU/TPU core/CPU for evaluation."}
     )
     gradient_accumulation_steps: int = field(
         default=1,
@@ -35,11 +35,11 @@ class MyTrainingArguments(TrainingArguments):
         default=0.17537006645417813, metadata={"help": "Weight decay for AdamW if we apply some."}
     )
     num_train_epochs: float = field(
-        default=2.0, metadata={"help": "Total number of training epochs to perform."}
+        default=10.0, metadata={"help": "Total number of training epochs to perform."}
     )
-    logging_steps: int = field(default=100, metadata={"help": "Log every X updates steps."})
-    save_steps: int = field(default=100, metadata={"help": "Save checkpoint every X updates steps."})
-    eval_steps: int = field(default=100, metadata={"help": "Run an evaluation every X steps."})
+    logging_steps: int = field(default=500, metadata={"help": "Log every X updates steps."})
+    save_steps: int = field(default=500, metadata={"help": "Save checkpoint every X updates steps."})
+    eval_steps: int = field(default=500, metadata={"help": "Run an evaluation every X steps."})
     dataloader_num_workers: int = field(
         default=0,
         metadata={
@@ -109,7 +109,7 @@ class MyTrainingArguments(TrainingArguments):
         },
     )
     metric_for_best_model: Optional[str] = field(
-        default=None, metadata={"help": "The metric to use to compare two different models."}
+        default="eval_exact_match", metadata={"help": "The metric to use to compare two different models."}
     )
     greater_is_better: Optional[bool] = field(
         default=None, metadata={"help": "Whether the `metric_for_best_model` should be maximized or not."}

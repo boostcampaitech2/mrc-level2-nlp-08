@@ -23,6 +23,7 @@ from retrieval import SparseRetrieval
 from arguments import ModelArguments, DataTrainingArguments, MyTrainingArguments
 from preprocess import make_datasets
 from model.metric import compute_metrics
+from model.model import LSTMRobertaForQuestionAnswering
 
 import wandb
 
@@ -61,11 +62,15 @@ def train(args):
     config = AutoConfig.from_pretrained(
         model_args.config_name if model_args.config_name is not None else model_args.model_name_or_path,
     )
-    model = AutoModelForQuestionAnswering.from_pretrained(
-        model_args.model_name_or_path,
-        from_tf=bool(".ckpt" in model_args.model_name_or_path),
+    model = LSTMRobertaForQuestionAnswering(
+        model_name_or_path=model_args.model_name_or_path,
         config=config,
     )
+    # model = AutoModelForQuestionAnswering.from_pretrained(
+    #     model_args.model_name_or_path,
+    #     from_tf=bool(".ckpt" in model_args.model_name_or_path),
+    #     config=config,
+    # )
 
     last_checkpoint = find_last_checkpoint(training_args)
 
