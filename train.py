@@ -16,12 +16,17 @@ from process import preprocess
 
 from metric import compute_metrics
 from utils import send_along
+from model import LSTMRobertaForQuestionAnswering
 
 
 def train(settings, args):
     args.config = AutoConfig.from_pretrained(settings.pretrained_model_name_or_path)
     args.tokenizer = AutoTokenizer.from_pretrained(settings.pretrained_model_name_or_path)
-    model = AutoModelForQuestionAnswering.from_pretrained(settings.pretrained_model_name_or_path)
+    # model = AutoModelForQuestionAnswering.from_pretrained(settings.pretrained_model_name_or_path)
+    model = LSTMRobertaForQuestionAnswering(
+        model_name_or_path=settings.pretrained_model_name_or_path,
+        config=args.config,
+    )
     data_collator = DataCollatorWithPadding(
         tokenizer=args.tokenizer, pad_to_multiple_of=args.pad_to_multiple_of if args.fp16 else None
     )
