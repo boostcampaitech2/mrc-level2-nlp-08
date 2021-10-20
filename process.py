@@ -82,3 +82,34 @@ def preprocess_eval_features(args, examples):
 
     examples["offset_mapping"] = masked_offset_mappings
     return examples
+
+def preprocess_g(args, examples):
+    # Prepocessing Query Part
+    formatted_question = list(map(lambda text: f"question: {text} context:", examples["question"]))
+    model_inputs = args.tokenizer(
+        formatted_question,
+        examples["context"],
+        truncation="only_second",
+        max_length=args.max_length-1,
+        stride=args.stride,
+        return_overflowing_tokens=True,
+        add_special_tokens=False
+    )
+    # add </s> at the end of the sentence
+    model_inputs["input_ids"] = list(map(lambda id: id + [1], model_inputs["input_ids"]))
+    # attention mask
+    model_inputs["attention_mask"] = list(map(lambda mask: mask + [1], model_inputs["attention_mask"]))
+
+    # Preprocessing Answers
+    answers = [f'{a["text"][0]} </s>' for a in examples['answers']]
+    
+    with args.tokenizer.as_target_tokenizer():
+        targets = args.tokenizer(answers, add_special_tokens=False)
+
+
+    model_inputs["labels"] = []
+    model_inputs["id"] = []
+    for i in model_inputs["overflow_to_sample_mapping"]:
+        model_inputs["labels"].append(targets["input_ids"][i])
+        model_inputs["id"].append(examples["id"][i])
+    return model_inputs

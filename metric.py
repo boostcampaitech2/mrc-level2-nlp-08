@@ -6,6 +6,7 @@ from datasets import load_metric
 from transformers.trainer_utils import EvalPrediction
 
 import numpy as np
+import nltk
 
 
 def check_empty(prediction: list):
@@ -100,3 +101,41 @@ def compute_metrics(args, outputs: EvalPrediction):
     ]
     metric = load_metric("squad")
     return metric.compute(predictions=predictions, references=references)
+
+
+def compute_metrics_g(args, eval_predictions):
+    #max_answer_length = args.max_answer_length
+    #num_max_prediction = args.num_max_prediction
+    dataset = args.dataset["validation"]
+    preds, labels = eval_predictions
+    if isinstance(preds, tuple):
+        preds = preds[0]
+
+    decoded_preds = args.tokenizer.batch_decode(preds, skip_special_tokens=True)
+    # decoded_labels은 rouge metric을 위한 것이며, f1/em을 구할 때 사용되지 않음
+    decoded_labels = args.tokenizer.batch_decode(labels, skip_special_tokens=True)
+
+    # 간단한 post-processing
+    decoded_preds, decoded_labels = postprocess_text(decoded_preds, decoded_labels)
+
+    formatted_predictions = [{"id": ex["id"], "prediction_text": decoded_preds[i]} for i, ex in enumerate(dataset["validation"])]
+    references = [{"id": ex["id"], "answers": ex["answers"]} for ex in dataset["validation"]]
+
+    metric = load_metric("squad")
+    return metric.compute(predictions=formatted_predictions, references=references)
+
+def postprocess_text(preds, labels):
+    """
+    postprocess는 nltk를 이용합니다.
+    Huggingface의 TemplateProcessing을 사용하여
+    정규표현식 기반으로 postprocess를 진행할 수 있지만
+    해당 미션에서는 nltk를 이용하여 간단한 후처리를 진행합니다
+    """
+
+    preds = [pred.strip() for pred in preds]
+    labels = [label.strip() for label in labels]
+
+    preds = ["\n".join(nltk.sent_tokenize(pred)) for pred in preds]
+    labels = ["\n".join(nltk.sent_tokenize(label)) for label in labels]
+
+    return preds, labels
