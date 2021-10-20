@@ -1,0 +1,84 @@
+from bisect import bisect_left
+
+
+def preprocess(args, examples):
+    answers = examples["answers"]
+    examples = args.tokenizer(
+        examples["question"],
+        examples["context"],
+        truncation="only_second",
+        max_length=args.max_length,
+        stride=args.stride,
+        return_overflowing_tokens=True,
+        return_offsets_mapping=True,
+    )
+
+    examples["start_positions"] = []
+    examples["end_positions"] = []
+    for input_ids, token_type_ids, offset_mapping, overflow_to_sample_mapping in zip(
+        examples["input_ids"],
+        examples["token_type_ids"],
+        examples["offset_mapping"],
+        examples["overflow_to_sample_mapping"],
+    ):
+        cls_token_idx = input_ids.index(args.tokenizer.cls_token_id)
+        answer_token_start_idx = answer_token_end_idx = cls_token_idx
+
+        answer_info = answers[overflow_to_sample_mapping]
+        if answer_info:
+            answer_start_idx = answer_info["answer_start"][0]
+            answer_end_idx = answer_start_idx + len(answer_info["text"][0])
+
+            context_token_start_idx = token_type_ids.index(1)
+            # Additional step forward(last index - 1) to exclude the last special token
+            context_token_end_idx = len(token_type_ids) - 2
+
+            offset_start_idxs, offset_end_idxs = zip(*offset_mapping)
+            if (
+                answer_start_idx >= offset_start_idxs[context_token_start_idx]
+                and answer_end_idx <= offset_end_idxs[context_token_end_idx]
+            ):
+                answer_token_start_idx = context_token_start_idx + bisect_left(
+                    offset_start_idxs[context_token_start_idx:context_token_end_idx], answer_start_idx
+                )
+                answer_token_end_idx = context_token_start_idx + bisect_left(
+                    offset_end_idxs[context_token_start_idx:context_token_end_idx], answer_end_idx
+                )
+
+        examples["start_positions"].append(answer_token_start_idx)
+        examples["end_positions"].append(answer_token_end_idx)
+
+    args.token_type_ids = examples["token_type_ids"]
+    if "roberta" in args.config.model_type.lower():
+        examples.pop("token_type_ids")
+    return examples
+
+
+def preprocess_eval_features(args, examples):
+    ids = examples["id"]
+    examples = args.tokenizer(
+        examples["question"],
+        examples["context"],
+        truncation="only_second",
+        max_length=args.max_length,
+        stride=args.stride,
+        return_overflowing_tokens=True,
+        return_offsets_mapping=True,
+    )
+
+    examples["example_id"] = []
+    masked_offset_mappings = []
+    for token_type_ids, offset_mapping, overflow_to_sample_mapping in zip(
+        examples["token_type_ids"],
+        examples["offset_mapping"],
+        examples["overflow_to_sample_mapping"],
+    ):
+        examples["example_id"].append(ids[overflow_to_sample_mapping])
+        masked_offset_mapping = [
+            mapping if token_type_id == 1 else None
+            for token_type_id, mapping in zip(token_type_ids, offset_mapping)
+        ]
+        masked_offset_mappings.append(masked_offset_mapping)
+
+    examples["offset_mapping"] = masked_offset_mappings
+    return examples

@@ -18,14 +18,7 @@ class LSTMRobertaForQuestionAnswering(RobertaPreTrainedModel):
         self.roberta = AutoModel.from_pretrained(model_name_or_path, config)
 
         self.hidden_dim = config.hidden_size
-        # self.gru = nn.GRU(
-        #     input_size=self.hidden_dim,
-        #     hidden_size=self.hidden_dim,
-        #     num_layers=2,
-        #     dropout=0.2,
-        #     batch_first=True,
-        #     bidirectional=True,
-        # )
+
         self.lstm = nn.LSTM(
             input_size=self.hidden_dim,
             hidden_size=self.hidden_dim,
@@ -34,13 +27,8 @@ class LSTMRobertaForQuestionAnswering(RobertaPreTrainedModel):
             batch_first=True,
             bidirectional=True,
         )
-        # self.conv1 = nn.Conv1d(in_channels=config.hidden_size, out_channels=config.hidden_size, kernel_size=1)
-        # self.conv2 = nn.Conv1d(in_channels=config.hidden_size, out_channels=config.hidden_size, kernel_size=3)
-        # self.conv3 = nn.Conv1d(in_channels=config.hidden_size, out_channels=config.hidden_size, kernel_size=5)
 
         self.qa_outputs = nn.Linear(config.hidden_size * 2, config.num_labels)
-
-        # self.init_weights()
 
     def forward(
         self,
@@ -72,18 +60,8 @@ class LSTMRobertaForQuestionAnswering(RobertaPreTrainedModel):
 
         sequence_output = outputs[0]
 
-        # CNN-LSTM
-        # conv_output = self.conv1(sequence_output)
-        # conv_output = self.conv2(conv_output)
-        # conv_output = self.conv3(conv_output)
-        # lstm_output, (h, c) = self.lstm(conv_output)
-
         # LSTM
         lstm_output, (h, c) = self.lstm(sequence_output)
-
-        # GRU
-        # gru_output, (h, c) = self.gru(sequence_output)
-        # concatenate_lstm_outputs = torch.cat((h[0], h[1]), dim=1)
 
         # print("---------------------------------")
         # print(sequence_output.shape)  # torch.Size([64, 384, 768])
@@ -94,7 +72,7 @@ class LSTMRobertaForQuestionAnswering(RobertaPreTrainedModel):
         # print("---------------------------------")
 
         logits = self.qa_outputs(lstm_output)
-        # logits = self.qa_outputs(gru_output)
+
         start_logits, end_logits = logits.split(1, dim=-1)
         start_logits = start_logits.squeeze(-1).contiguous()
         end_logits = end_logits.squeeze(-1).contiguous()
