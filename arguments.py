@@ -9,6 +9,7 @@ from transformers.trainer_utils import IntervalStrategy
 @dataclass
 class SettingsArguments:
     pretrained_model_name_or_path: str = field(default="klue/bert-base")
+    trained_model_path: str = field(default="./output")
     trainset_path: str = field(default="../data/train_dataset")
     testset_path: str = field(default="../data/test_dataset")
     load_from_cache_file: bool = field(default=True)

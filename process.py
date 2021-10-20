@@ -54,8 +54,7 @@ def preprocess(args, examples):
     return examples
 
 
-def preprocess_eval_features(args, examples):
-    ids = examples["id"]
+def preprocess_testset(args, examples):
     examples = args.tokenizer(
         examples["question"],
         examples["context"],
@@ -66,19 +65,7 @@ def preprocess_eval_features(args, examples):
         return_offsets_mapping=True,
     )
 
-    examples["example_id"] = []
-    masked_offset_mappings = []
-    for token_type_ids, offset_mapping, overflow_to_sample_mapping in zip(
-        examples["token_type_ids"],
-        examples["offset_mapping"],
-        examples["overflow_to_sample_mapping"],
-    ):
-        examples["example_id"].append(ids[overflow_to_sample_mapping])
-        masked_offset_mapping = [
-            mapping if token_type_id == 1 else None
-            for token_type_id, mapping in zip(token_type_ids, offset_mapping)
-        ]
-        masked_offset_mappings.append(masked_offset_mapping)
-
-    examples["offset_mapping"] = masked_offset_mappings
+    args.token_type_ids = examples["token_type_ids"]
+    if "roberta" in args.config.model_type.lower():
+        examples.pop("token_type_ids")
     return examples
