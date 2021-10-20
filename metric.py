@@ -6,7 +6,7 @@ from datasets import load_metric
 from transformers.trainer_utils import EvalPrediction
 
 import numpy as np
-import nltk
+import re
 
 
 def check_empty(prediction: list):
@@ -99,43 +99,68 @@ def compute_metrics(args, outputs: EvalPrediction):
     references = [
         {"id": example["id"], "answers": example["answers"]} for example in args.dataset["validation"]
     ]
+    print(predictions)
+    print(references)
     metric = load_metric("squad")
     return metric.compute(predictions=predictions, references=references)
 
 
 def compute_metrics_g(args, eval_predictions):
-    #max_answer_length = args.max_answer_length
-    #num_max_prediction = args.num_max_prediction
     dataset = args.dataset["validation"]
     preds, labels = eval_predictions
     if isinstance(preds, tuple):
         preds = preds[0]
 
-    decoded_preds = args.tokenizer.batch_decode(preds, skip_special_tokens=True)
-    # decoded_labels은 rouge metric을 위한 것이며, f1/em을 구할 때 사용되지 않음
-    decoded_labels = args.tokenizer.batch_decode(labels, skip_special_tokens=True)
+    for i in range(len(preds)):
+        preds[i] = list(map(lambda x : 0 if x == 250099 else x, preds[i]))
+    for i in range(len(labels)):
+        labels[i] = list(map(lambda x : 0 if x == -100 else x, labels[i]))
 
+    decoded_preds = args.tokenizer.batch_decode(preds, skip_special_tokens=True)
+    decoded_labels = args.tokenizer.batch_decode(labels, skip_special_tokens=True)
     # 간단한 post-processing
     decoded_preds, decoded_labels = postprocess_text(decoded_preds, decoded_labels)
+    
+    prediction_cadidates_info = defaultdict(list)
+    for pred, ans, overflow_to_sample_mapping in zip(decoded_preds, decoded_labels, args.processed_eval_dataset["overflow_to_sample_mapping"]):
+        id = dataset["id"][overflow_to_sample_mapping]
+        context = dataset["context"][overflow_to_sample_mapping]
+        question = dataset["question"][overflow_to_sample_mapping]
+        prediction_cadidates_info[id].append(
+                        {
+                            "text": context,
+                            "question": question,
+                            "prediction": pred,
+                            "answer": ans
+                        }
+                    )
+    """
+    predictions_info_per_id = {
+        id: predictions_info
+        for id, predictions_info in prediction_cadidates_info.items()
+    }
+    """
+    formatted_predictions = []
+    references = []
 
-    formatted_predictions = [{"id": ex["id"], "prediction_text": decoded_preds[i]} for i, ex in enumerate(dataset["validation"])]
-    references = [{"id": ex["id"], "answers": ex["answers"]} for ex in dataset["validation"]]
-
+    for id in prediction_cadidates_info.keys():
+        formatted_predictions.append({"id": id, "prediction_text": prediction_cadidates_info[id][0]["prediction"]})
+        references.append({"id": id, "answers": {"text": prediction_cadidates_info[id][0]["answer"], "answer_start" : [0]}})
+    
     metric = load_metric("squad")
+
+    with open(path.join(args.output_dir, "generation.json"), "w", encoding="utf-8") as json_output:
+        json.dump(prediction_cadidates_info, json_output, ensure_ascii=False, indent=4)
+    
     return metric.compute(predictions=formatted_predictions, references=references)
 
 def postprocess_text(preds, labels):
-    """
-    postprocess는 nltk를 이용합니다.
-    Huggingface의 TemplateProcessing을 사용하여
-    정규표현식 기반으로 postprocess를 진행할 수 있지만
-    해당 미션에서는 nltk를 이용하여 간단한 후처리를 진행합니다
-    """
-
+    
+    preds = [re.sub(r"(\\n|\\|\n|\'|\.|\"|<extra_id_[0-9]>|\?)", "", pred) for pred in preds]
+    preds = [re.sub(r"\s\s+", " ", pred) for pred in preds]
+    labels = [re.sub(r"(\'|\.|\")", "", label) for label in labels]
+    
     preds = [pred.strip() for pred in preds]
     labels = [label.strip() for label in labels]
-
-    preds = ["\n".join(nltk.sent_tokenize(pred)) for pred in preds]
-    labels = ["\n".join(nltk.sent_tokenize(label)) for label in labels]
 
     return preds, labels

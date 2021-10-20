@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from importlib.metadata import metadata
+from importlib import metadata
 from typing import Optional
 
 from transformers import TrainingArguments, Seq2SeqTrainingArguments
@@ -37,7 +38,7 @@ class Arguments(TrainingArguments):
     do_train: bool = field(default=True, metadata={"help": "Whether to run training."})
     do_eval: bool = field(default=True, metadata={"help": "Whether to run eval on the dev set."})
     evaluation_strategy: IntervalStrategy = field(
-        default="steps",
+        default="epoch",
         metadata={"help": "The evaluation strategy to use."},
     )
 
@@ -72,7 +73,7 @@ class Arguments(TrainingArguments):
     )
     pad_to_multiple_of: int = field(default=8, metadata={"help": "Pad to multiple of set number"})
 
-    max_length: Optional[int] = field(default=1024)
+    max_length: Optional[int] = field(default=384)
     stride: int = field(
         default=128,
         metadata={"help": "The stride to use when handling overflow."},
@@ -94,7 +95,7 @@ class Arguments(TrainingArguments):
         metadata={"help": "Define how many top-k passages to retrieve based on similarity."},
     )
     use_faiss: bool = field(default=False, metadata={"help": "Whether to build with faiss"})
-    num_clusters: int = field(default=64, metadata={"help": "Define how many clusters to use for faiss."}),
+    num_clusters: int = field(default=64, metadata={"help": "Define how many clusters to use for faiss."})
 
  
 @dataclass
@@ -118,7 +119,7 @@ class Seq2SeqArguments(Seq2SeqTrainingArguments):
     do_train: bool = field(default=True, metadata={"help": "Whether to run training."})
     do_eval: bool = field(default=True, metadata={"help": "Whether to run eval on the dev set."})
     evaluation_strategy: IntervalStrategy = field(
-        default="steps",
+        default="epoch",
         metadata={"help": "The evaluation strategy to use."},
     )
 
@@ -165,7 +166,7 @@ class Seq2SeqArguments(Seq2SeqTrainingArguments):
             "This is needed because the start and end predictions are not conditioned on one another."
         },
     )
-    num_max_prediction: int = field(default=20)
+    num_max_prediction: int = field(default=30)
     eval_retrieval: bool = field(
         default=True,
         metadata={"help": "Whether to run passage retrieval using sparse embedding."},
@@ -175,6 +176,6 @@ class Seq2SeqArguments(Seq2SeqTrainingArguments):
         metadata={"help": "Define how many top-k passages to retrieve based on similarity."},
     )
     use_faiss: bool = field(default=False, metadata={"help": "Whether to build with faiss"})
-    num_clusters: int = field(default=64, metadata={"help": "Define how many clusters to use for faiss."}),
-    num_beams: int = field(default=5, metadata={"help": "Number of beams when generating text"}),
+    num_clusters: int = field(default=64, metadata={"help": "Define how many clusters to use for faiss."})
+    num_beams: int = field(default=50, metadata={"help": "Number of beams when generating text"})
     predict_with_generate: bool = field(default=True)

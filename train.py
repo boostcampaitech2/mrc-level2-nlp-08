@@ -61,7 +61,7 @@ def train(settings, args):
         data_collator=data_collator,
         compute_metrics=send_along(compute_metrics, sent_along=args),
     )
-    trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
+    trainer.train()
     trainer.save_model()
     trainer.evaluate()
 
@@ -118,10 +118,12 @@ def train_g(settings, args):
 if __name__ == "__main__":
     os.environ["WANDB_DISABLED"] = "true"
     parser = HfArgumentParser((SettingsArguments, Seq2SeqArguments))
-    settings, seqargs = parser.parse_args_into_dataclasses()
+    settings, args = parser.parse_args_into_dataclasses()
     if settings.extractive:
-        pass
+        set_seed(args.seed)
+        print(args)
+        train(settings, args)
     else:
-        set_seed(seqargs.seed)
-        print(seqargs)
-        train_g(settings, seqargs)
+        set_seed(args.seed)
+        print(args)
+        train_g(settings, args)
