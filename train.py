@@ -125,13 +125,8 @@ def train(args):
 
 if __name__ == "__main__":
 
-    os.environ["WANDB_DISABLED"] = "true"
-    # wandb.init(
-    #     project="MRC_baseline",
-    #     entity="chungye-mountain-sherpa",
-    #     name="default settings",
-    #     group=model_args.model_name_or_path
-    # )
+    # os.environ["WANDB_DISABLED"] = "true"
+    wandb.init(project="MRC_add_lstm", entity="chungye-mountain-sherpa", name="bert-base", group="paper_hp")
 
     parser = HfArgumentParser((ModelArguments, DataTrainingArguments, MyTrainingArguments))
 
