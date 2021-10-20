@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
-from importlib.metadata import metadata
-from typing import Optional
+from typing import Optional, Tuple
 
 from transformers import TrainingArguments
 from transformers.trainer_utils import IntervalStrategy
@@ -8,11 +7,11 @@ from transformers.trainer_utils import IntervalStrategy
 
 @dataclass
 class SettingsArguments:
-    pretrained_model_name_or_path: str = field(default="klue/bert-base")
+    pretrained_model_name_or_path: str = field(default="klue/roberta-small")
     trained_model_path: str = field(default="./output")
     trainset_path: str = field(default="../data/train_dataset")
     testset_path: str = field(default="../data/test_dataset")
-    load_from_cache_file: bool = field(default=True)
+    load_from_cache_file: bool = field(default=False)
     num_proc: Optional[int] = field(default=None)
 
 
@@ -49,7 +48,7 @@ class Arguments(TrainingArguments):
     )
 
     num_train_epochs: float = field(
-        default=0.1, metadata={"help": "Total number of training epochs to perform."}
+        default=0.05, metadata={"help": "Total number of training epochs to perform."}
     )
 
     save_strategy: IntervalStrategy = field(
@@ -72,6 +71,20 @@ class Arguments(TrainingArguments):
     )
     pad_to_multiple_of: int = field(default=8, metadata={"help": "Pad to multiple of set number"})
 
+    label_names: Optional[Tuple[str]] = field(
+        default=("start_positions", "end_positions"),
+        metadata={"help": "The list of keys in your dictionary of inputs that correspond to the labels."},
+    )
+    load_best_model_at_end: Optional[bool] = field(
+        default=True,
+        metadata={
+            "help": "Whether or not to load the best model found during training at the end of training."
+        },
+    )
+    metric_for_best_model: Optional[str] = field(
+        default="f1", metadata={"help": "The metric to use to compare two different models."}
+    )
+
     max_length: Optional[int] = field(default=384)
     stride: int = field(
         default=128,
@@ -83,6 +96,10 @@ class Arguments(TrainingArguments):
             "help": "The maximum length of an answer tokens that can be generated."
             "This is needed because the start and end predictions are not conditioned on one another."
         },
+    )
+    resume_from_checkpoint: Optional[str] = field(
+        default=None,
+        metadata={"help": "The path to a folder with a valid checkpoint for your model."},
     )
     num_max_prediction: int = field(default=20)
     eval_retrieval: bool = field(
