@@ -7,14 +7,6 @@ from transformers.models.roberta.modeling_roberta import RobertaPreTrainedModel
 from transformers import AutoModelForQuestionAnswering, AutoModel
 
 
-class Identity(nn.Module):
-    def __init__(self):
-        super(Identity, self).__init__()
-
-    def forward(self, x):
-        return x
-
-
 class LSTMRobertaForQuestionAnswering(RobertaPreTrainedModel):
     _keys_to_ignore_on_load_unexpected = [r"pooler"]
     _keys_to_ignore_on_load_missing = [r"position_ids"]
@@ -26,8 +18,6 @@ class LSTMRobertaForQuestionAnswering(RobertaPreTrainedModel):
         self.roberta = AutoModel.from_pretrained(model_name_or_path, config)
 
         self.hidden_dim = config.hidden_size
-
-        self.roberta.pooler = Identity()
 
         self.lstm = nn.LSTM(
             input_size=self.hidden_dim,

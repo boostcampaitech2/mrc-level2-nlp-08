@@ -68,9 +68,6 @@ def train(settings, args):
 
 if __name__ == "__main__":
     os.environ["WANDB_DISABLED"] = "true"
-    # wandb.init(
-    #     project="MRC_add_lstm", entity="chungye-mountain-sherpa", name="roberta_large", group="nlayer_12"
-    # )
     parser = HfArgumentParser((SettingsArguments, Arguments))
     settings, args = parser.parse_args_into_dataclasses()
     set_seed(args.seed)
