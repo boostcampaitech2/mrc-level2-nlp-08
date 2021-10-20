@@ -8,10 +8,19 @@ from transformers.trainer_utils import EvalPrediction
 import numpy as np
 
 
-def check_empty(prediction: list):
+def check_empty(prediction: list = None):
     if prediction:
         return prediction
-    return [{"text": "empty", "start_logit": 0.0, "end_logit": 0.0, "score": 0.0}]
+    return [{"text": "empty", "start_logit": 0.0, "end_logit": 0.0, "score": 100.0}]
+
+
+def fill_empty_ids(predictions: dict, ids: list):
+    ids = set(ids)
+    exist = set(predictions.keys())
+    to_fill = ids - exist
+    for id in to_fill:
+        predictions[id] = check_empty()
+    return predictions
 
 
 def postprocess(args, outputs: EvalPrediction):
@@ -64,6 +73,7 @@ def postprocess(args, outputs: EvalPrediction):
         id: sorted(check_empty(predictions_info), key=lambda x: x["score"], reverse=True)[:num_max_prediction]
         for id, predictions_info in prediction_cadidates_info.items()
     }
+    predictions_info_per_id = fill_empty_ids(predictions_info_per_id, dataset["id"])
 
     for predictions_info in predictions_info_per_id.values():
         scores = np.array([prediction_info.pop("score") for prediction_info in predictions_info])

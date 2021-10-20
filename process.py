@@ -15,14 +15,19 @@ def preprocess(args, examples):
 
     examples["start_positions"] = []
     examples["end_positions"] = []
-    for input_ids, token_type_ids, offset_mapping, overflow_to_sample_mapping in zip(
-        examples["input_ids"],
-        examples["token_type_ids"],
-        examples["offset_mapping"],
-        examples["overflow_to_sample_mapping"],
+    for i, (input_ids, token_type_ids, offset_mapping, overflow_to_sample_mapping) in enumerate(
+        zip(
+            examples["input_ids"],
+            examples["token_type_ids"],
+            examples["offset_mapping"],
+            examples["overflow_to_sample_mapping"],
+        )
     ):
         cls_token_idx = input_ids.index(args.tokenizer.cls_token_id)
         answer_token_start_idx = answer_token_end_idx = cls_token_idx
+
+        token_type_ids = examples.sequence_ids(i)
+        examples["token_type_ids"][i] = token_type_ids
 
         answer_info = answers[overflow_to_sample_mapping]
         if answer_info:
