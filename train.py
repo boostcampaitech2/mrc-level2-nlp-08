@@ -1,6 +1,6 @@
 import os
 
-from datasets import load_from_disk
+from datasets import load_from_disk, set_caching_enabled
 from transformers import (
     AutoConfig,
     AutoTokenizer,
@@ -11,17 +11,23 @@ from transformers import (
     set_seed,
 )
 
+import wandb
+
 from arguments import SettingsArguments, Arguments
 from process import preprocess
-
 from metric import compute_metrics
 from utils import send_along
+from models.lstm_roberta import LSTMRobertaForQuestionAnswering
 
 
 def train(settings, args):
     args.config = AutoConfig.from_pretrained(settings.pretrained_model_name_or_path)
     args.tokenizer = AutoTokenizer.from_pretrained(settings.pretrained_model_name_or_path)
-    model = AutoModelForQuestionAnswering.from_pretrained(settings.pretrained_model_name_or_path)
+    model = AutoModelForQuestionAnswering.from_pretrained(
+        settings.pretrained_model_name_or_path, config=args.config
+    )
+    # model = LSTMRobertaForQuestionAnswering(settings.pretrained_model_name_or_path, config=args.config)
+
     data_collator = DataCollatorWithPadding(
         tokenizer=args.tokenizer, pad_to_multiple_of=args.pad_to_multiple_of if args.fp16 else None
     )
@@ -56,9 +62,8 @@ def train(settings, args):
         data_collator=data_collator,
         compute_metrics=send_along(compute_metrics, sent_along=args),
     )
-    trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
+    trainer.train()
     trainer.save_model()
-    trainer.evaluate()
 
 
 if __name__ == "__main__":
@@ -66,5 +71,13 @@ if __name__ == "__main__":
     parser = HfArgumentParser((SettingsArguments, Arguments))
     settings, args = parser.parse_args_into_dataclasses()
     set_seed(args.seed)
+    set_caching_enabled(False)
 
+    # wandb.login()
+    # wandb.init(
+    #     project="lstm_roberta_conv1d",
+    #     entity="chungye-mountain-sherpa",
+    #     name=f'base: {args.pretrained_model_name_or_path}',
+    #     group='lstm_depth_6',
+    # )
     train(settings, args)
