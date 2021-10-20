@@ -14,7 +14,7 @@ def check_empty(prediction: list):
     return [{"text": "empty", "start_logit": 0.0, "end_logit": 0.0, "score": 0.0}]
 
 
-def compute_metrics(args, outputs: EvalPrediction):
+def postprocess(args, outputs: EvalPrediction):
     max_answer_length = args.max_answer_length
     num_max_prediction = args.num_max_prediction
     dataset = args.dataset["validation"]
@@ -95,6 +95,11 @@ def compute_metrics(args, outputs: EvalPrediction):
         {"id": id, "prediction_text": predictions_info[0]["text"]}
         for id, predictions_info in predictions_info_per_id.items()
     ]
+    return predictions
+
+
+def compute_metrics(args, outputs: EvalPrediction):
+    predictions = postprocess(args, outputs)
     references = [
         {"id": example["id"], "answers": example["answers"]} for example in args.dataset["validation"]
     ]

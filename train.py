@@ -16,21 +16,17 @@ from process import preprocess
 
 from metric import compute_metrics
 from utils import send_along
-import wandb
 from model import LSTMRobertaForQuestionAnswering
 
 
 def train(settings, args):
     args.config = AutoConfig.from_pretrained(settings.pretrained_model_name_or_path)
     args.tokenizer = AutoTokenizer.from_pretrained(settings.pretrained_model_name_or_path)
-    # model = AutoModelForQuestionAnswering.from_pretrained(
-    #     settings.pretrained_model_name_or_path, config=args.config
-    # )
+    # model = AutoModelForQuestionAnswering.from_pretrained(settings.pretrained_model_name_or_path)
     model = LSTMRobertaForQuestionAnswering(
         model_name_or_path=settings.pretrained_model_name_or_path,
         config=args.config,
     )
-
     data_collator = DataCollatorWithPadding(
         tokenizer=args.tokenizer, pad_to_multiple_of=args.pad_to_multiple_of if args.fp16 else None
     )
@@ -72,11 +68,9 @@ def train(settings, args):
 
 if __name__ == "__main__":
     os.environ["WANDB_DISABLED"] = "true"
-
     # wandb.init(
     #     project="MRC_add_lstm", entity="chungye-mountain-sherpa", name="roberta_large", group="nlayer_12"
     # )
-
     parser = HfArgumentParser((SettingsArguments, Arguments))
     settings, args = parser.parse_args_into_dataclasses()
     set_seed(args.seed)
