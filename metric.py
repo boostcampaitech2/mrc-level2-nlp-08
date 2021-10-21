@@ -9,13 +9,22 @@ import numpy as np
 import re
 
 
-def check_empty(prediction: list):
+def check_empty(prediction: list = None):
     if prediction:
         return prediction
-    return [{"text": "empty", "start_logit": 0.0, "end_logit": 0.0, "score": 0.0}]
+    return [{"text": "empty", "start_logit": 0.0, "end_logit": 0.0, "score": 100.0}]
 
 
-def compute_metrics(args, outputs: EvalPrediction):
+def fill_empty_ids(predictions: dict, ids: list):
+    ids = set(ids)
+    exist = set(predictions.keys())
+    to_fill = ids - exist
+    for id in to_fill:
+        predictions[id] = check_empty()
+    return predictions
+
+
+def postprocess(args, outputs: EvalPrediction):
     max_answer_length = args.max_answer_length
     num_max_prediction = args.num_max_prediction
     dataset = args.dataset["validation"]
@@ -65,6 +74,7 @@ def compute_metrics(args, outputs: EvalPrediction):
         id: sorted(check_empty(predictions_info), key=lambda x: x["score"], reverse=True)[:num_max_prediction]
         for id, predictions_info in prediction_cadidates_info.items()
     }
+    predictions_info_per_id = fill_empty_ids(predictions_info_per_id, dataset["id"])
 
     for predictions_info in predictions_info_per_id.values():
         scores = np.array([prediction_info.pop("score") for prediction_info in predictions_info])
@@ -96,6 +106,11 @@ def compute_metrics(args, outputs: EvalPrediction):
         {"id": id, "prediction_text": predictions_info[0]["text"]}
         for id, predictions_info in predictions_info_per_id.items()
     ]
+    return predictions
+
+
+def compute_metrics(args, outputs: EvalPrediction):
+    predictions = postprocess(args, outputs)
     references = [
         {"id": example["id"], "answers": example["answers"]} for example in args.dataset["validation"]
     ]

@@ -15,14 +15,19 @@ def preprocess(args, examples):
 
     examples["start_positions"] = []
     examples["end_positions"] = []
-    for input_ids, token_type_ids, offset_mapping, overflow_to_sample_mapping in zip(
-        examples["input_ids"],
-        examples["token_type_ids"],
-        examples["offset_mapping"],
-        examples["overflow_to_sample_mapping"],
+    for i, (input_ids, token_type_ids, offset_mapping, overflow_to_sample_mapping) in enumerate(
+        zip(
+            examples["input_ids"],
+            examples["token_type_ids"],
+            examples["offset_mapping"],
+            examples["overflow_to_sample_mapping"],
+        )
     ):
         cls_token_idx = input_ids.index(args.tokenizer.cls_token_id)
         answer_token_start_idx = answer_token_end_idx = cls_token_idx
+
+        token_type_ids = examples.sequence_ids(i)
+        examples["token_type_ids"][i] = token_type_ids
 
         answer_info = answers[overflow_to_sample_mapping]
         if answer_info:
@@ -54,8 +59,7 @@ def preprocess(args, examples):
     return examples
 
 
-def preprocess_eval_features(args, examples):
-    ids = examples["id"]
+def preprocess_testset(args, examples):
     examples = args.tokenizer(
         examples["question"],
         examples["context"],
@@ -66,21 +70,9 @@ def preprocess_eval_features(args, examples):
         return_offsets_mapping=True,
     )
 
-    examples["example_id"] = []
-    masked_offset_mappings = []
-    for token_type_ids, offset_mapping, overflow_to_sample_mapping in zip(
-        examples["token_type_ids"],
-        examples["offset_mapping"],
-        examples["overflow_to_sample_mapping"],
-    ):
-        examples["example_id"].append(ids[overflow_to_sample_mapping])
-        masked_offset_mapping = [
-            mapping if token_type_id == 1 else None
-            for token_type_id, mapping in zip(token_type_ids, offset_mapping)
-        ]
-        masked_offset_mappings.append(masked_offset_mapping)
-
-    examples["offset_mapping"] = masked_offset_mappings
+    args.token_type_ids = examples["token_type_ids"]
+    if "roberta" in args.config.model_type.lower():
+        examples.pop("token_type_ids")
     return examples
 
 def preprocess_g(args, examples):
