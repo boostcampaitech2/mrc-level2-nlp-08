@@ -19,13 +19,13 @@ class MyTrainingArguments(TrainingArguments):
         },
     )
     per_device_train_batch_size: int = field(
-        default=64, metadata={"help": "Batch size per GPU/TPU core/CPU for training."}
+        default=16, metadata={"help": "Batch size per GPU/TPU core/CPU for training."}
     )
     per_device_eval_batch_size: int = field(
-        default=64, metadata={"help": "Batch size per GPU/TPU core/CPU for evaluation."}
+        default=16, metadata={"help": "Batch size per GPU/TPU core/CPU for evaluation."}
     )
     gradient_accumulation_steps: int = field(
-        default=1,
+        default=8,
         metadata={"help": "Number of updates steps to accumulate before performing a backward/update pass."},
     )
     learning_rate: float = field(
@@ -35,7 +35,7 @@ class MyTrainingArguments(TrainingArguments):
         default=0.17537006645417813, metadata={"help": "Weight decay for AdamW if we apply some."}
     )
     num_train_epochs: float = field(
-        default=2.0, metadata={"help": "Total number of training epochs to perform."}
+        default=5.0, metadata={"help": "Total number of training epochs to perform."}
     )
     logging_steps: int = field(default=100, metadata={"help": "Log every X updates steps."})
     save_steps: int = field(default=100, metadata={"help": "Save checkpoint every X updates steps."})
@@ -128,7 +128,7 @@ class ModelArguments:
     """
 
     model_name_or_path: str = field(
-        default="klue/roberta-small",
+        default="klue/roberta-large",
         metadata={"help": "Path to pretrained model or model identifier from huggingface.co/models"},
     )
     config_name: Optional[str] = field(
@@ -157,7 +157,7 @@ class DataTrainingArguments:
     """
 
     dataset_name: Optional[str] = field(
-        default="../data/train_dataset",
+        default="/opt/ml/data/train_dataset",
         metadata={"help": "The name of the dataset to use."},
     )
     overwrite_cache: bool = field(
