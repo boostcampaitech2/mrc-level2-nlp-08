@@ -10,5 +10,9 @@ wandb/
 # saved model & predictions
 outputs/
 predictions/
+models/
+model/
+
+
 
 /.DS_Store
