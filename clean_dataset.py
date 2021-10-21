@@ -40,7 +40,7 @@ def preprocess_wiki(dataset):
         key = str(i)
         context = dataset[key]['text']
         dataset[key]['text'] = preprocess(context)
-        new_wiki[key] = dataset[key]['text']
+        new_wiki[key] = dataset[key]
 
     return new_wiki
 
@@ -64,5 +64,5 @@ def create_processed_datasets(data_path="../data/"):
     new_train_data = pd.DataFrame(preprocess_dataset(train_dataset))
     new_validation_data = pd.DataFrame(preprocess_dataset(validation_dataset))
 
-    Dataset.from_pandas(new_train_data, features=train_f).save_to_disk('/opt/ml/data/train_dataset/new_train')
-    Dataset.from_pandas(new_validation_data, features=train_f).save_to_disk('/opt/ml/data/train_dataset/new_validation')
+    Dataset.from_pandas(new_train_data, features=train_f).save_to_disk('/opt/ml/data/new_train_dataset/train')
+    Dataset.from_pandas(new_validation_data, features=train_f).save_to_disk('/opt/ml/data/new_train_dataset/validation')
