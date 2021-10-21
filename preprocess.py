@@ -2,7 +2,7 @@ from utils import check_and_get_max_sequence_length
 
 
 def make_datasets(datasets, tokenizer, training_args, data_args):
-    if "train" not in datasets:
+    if ("train" not in datasets) and ("new_train" not in datasets):
         raise ValueError("--do_train requires a train dataset")
 
     train_dataset = preprocess_train_datasets(datasets, tokenizer, data_args)

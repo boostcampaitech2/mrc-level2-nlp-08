@@ -329,7 +329,7 @@ def check_no_error(
             "requirement"
         )
 
-    if "validation" not in datasets:
+    if ("validation" not in datasets) and ("new_validation" not in datasets):
         raise ValueError("--do_eval requires a validation dataset")
 
     return None
