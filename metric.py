@@ -125,11 +125,9 @@ def compute_metrics_g(args, eval_predictions):
     preds, labels = eval_predictions
     if isinstance(preds, tuple):
         preds = preds[0]
-
-    for i in range(len(preds)):
-        preds[i] = list(map(lambda x : 0 if x == 250099 else x, preds[i]))
-    for i in range(len(labels)):
-        labels[i] = list(map(lambda x : 0 if x == -100 else x, labels[i]))
+    
+    # -100이 라벨의 pad로 들어가 있기 때문에 바꿔줘야함
+    labels = np.where(labels != -100, labels, args.tokenizer.pad_token_id)
 
     decoded_preds = args.tokenizer.batch_decode(preds, skip_special_tokens=True)
     decoded_labels = args.tokenizer.batch_decode(labels, skip_special_tokens=True)
