@@ -44,7 +44,7 @@ def preprocess_wiki(dataset):
 
     return new_wiki
 
-def create_processed_datasets(data_path="../data/"):
+def create_processed_datasets(data_path='/opt/ml/data/'):
     train_features = Features({'answers': Sequence(feature={'text': Value(dtype='string', id=None), 'answer_start': Value(dtype='int32', id=None)}, length=-1, id=None),
                     'context': Value(dtype='string', id=None),
                     'id': Value(dtype='string', id=None),
@@ -54,7 +54,7 @@ def create_processed_datasets(data_path="../data/"):
             wiki = json.load(f)
     
     new_wiki = preprocess_wiki(wiki)
-    with open('../data/preprocess_wiki.json', 'w', encoding='utf-8') as make_file:
+    with open('/opt/ml/data/preprocess_wiki.json', 'w', encoding='utf-8') as make_file:
             json.dump(new_wiki, make_file, indent="\t", ensure_ascii=False)
 
 

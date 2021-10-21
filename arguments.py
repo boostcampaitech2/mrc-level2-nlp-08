@@ -202,7 +202,7 @@ class DataTrainingArguments:
     )
     num_clusters: int = field(default=5, metadata={"help": "Define how many clusters to use for faiss."})
     top_k_retrieval: int = field(
-        default=20,
+        default=100,
         metadata={"help": "Define how many top-k passages to retrieve based on similarity."},
     )
     use_faiss: bool = field(default=False, metadata={"help": "Whether to build with faiss"})
