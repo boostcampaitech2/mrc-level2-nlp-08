@@ -35,7 +35,7 @@ class MyTrainingArguments(TrainingArguments):
         default=0.17537006645417813, metadata={"help": "Weight decay for AdamW if we apply some."}
     )
     num_train_epochs: float = field(
-        default=5.0, metadata={"help": "Total number of training epochs to perform."}
+        default=10.0, metadata={"help": "Total number of training epochs to perform."}
     )
     logging_steps: int = field(default=100, metadata={"help": "Log every X updates steps."})
     save_steps: int = field(default=100, metadata={"help": "Save checkpoint every X updates steps."})
@@ -157,7 +157,7 @@ class DataTrainingArguments:
     """
 
     dataset_name: Optional[str] = field(
-        default="/opt/ml/data/train_dataset",
+        default="/opt/ml/data/new_train_dataset",
         metadata={"help": "The name of the dataset to use."},
     )
     overwrite_cache: bool = field(
@@ -202,7 +202,7 @@ class DataTrainingArguments:
     )
     num_clusters: int = field(default=5, metadata={"help": "Define how many clusters to use for faiss."})
     top_k_retrieval: int = field(
-        default=15,
+        default=20,
         metadata={"help": "Define how many top-k passages to retrieve based on similarity."},
     )
     use_faiss: bool = field(default=False, metadata={"help": "Whether to build with faiss"})
