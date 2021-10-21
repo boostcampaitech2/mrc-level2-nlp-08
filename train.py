@@ -122,13 +122,13 @@ if __name__ == "__main__":
     os.environ["WANDB_DISABLED"] = "true"
     parser = HfArgumentParser((SettingsArguments, Seq2SeqArguments))
     settings, args = parser.parse_args_into_dataclasses()
-    # wandb.login()
-    # wandb.init(
-    #     project="lstm_roberta_conv1d",
-    #     entity="chungye-mountain-sherpa",
-    #     name=f'base: {args.pretrained_model_name_or_path}',
-    #     group='lstm_depth_6',
-    # )
+    wandb.login()
+    wandb.init(
+        project="generative_qa",
+        entity="chungye-mountain-sherpa",
+        name='loss_not_working_why',
+        group='prototype',
+    )
 
     if settings.extractive:
         set_seed(args.seed)

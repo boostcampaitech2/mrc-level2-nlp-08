@@ -174,6 +174,8 @@ def postprocess_text(preds, labels):
     labels = [re.sub(r"(\'|\.|\")", "", label) for label in labels]
     
     preds = [pred.strip() for pred in preds]
+    # no empty string
+    preds = ["empty" if pred == "" else pred for pred in preds]
     labels = [label.strip() for label in labels]
 
     return preds, labels
