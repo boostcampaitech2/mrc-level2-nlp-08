@@ -32,7 +32,7 @@ class SparseRetrieval:
     def __init__(
         self,
         tokenize_fn,
-        data_path: Optional[str] = "../data/",
+        data_path: Optional[str] = "../data",
         context_path: Optional[str] = "wikipedia_documents.json",
     ) -> NoReturn:
 
@@ -72,8 +72,15 @@ class SparseRetrieval:
         self.indexer = None  # build_faiss()로 생성합니다.
 
     def get_sparse_embedding(self) -> NoReturn:
-        with timer("Fitting the Bm25"):
-            self.bm25.fit(self.contexts)
+
+        self.rank_path = '../data/rank.bin'
+        if os.path.isfile(self.rank_path):
+            print('Found pickled ranking. Not computing BM25')
+            pass
+        else:
+            print('Cannot find pickled ranking. Check if "rank.bin" is in data dir.')
+            with timer("Making a new ranking: fitting the BM25"):
+                self.bm25.fit(self.contexts[:20])   
 
     def build_faiss(self, num_clusters=64) -> NoReturn:
 
@@ -216,23 +223,39 @@ class SparseRetrieval:
         Note:
             vocab 에 없는 이상한 단어로 query 하는 경우 assertion 발생 (예) 뙣뙇?
         """
-        result = []
+        if os.path.isfile(self.rank_path):
+            with open(self.rank_path, "rb") as file:
+                rank = pickle.load(file)
+            
+            assert k <= len(rank[0]), "rank.bin does not have enough top_k_indices"
+            
+            for i in range(len(rank)):
+                rank[i] = rank[i][:k]
+            doc_scores, doc_indices = [], rank
 
-        print("Computing the Proximity between Each Query and the Contexts")
-        for query in tqdm(queries):
-            embedding = self.bm25.transform(query, self.contexts)
-            result.append(embedding)
+            print(rank)
 
-        result = np.array(result)
+        else: # Cannot Find Pickled Ranking File. Check if "rank.bin" is in data dir.
+            result = []
 
-        print(result.shape)
+            print("Making a New Ranking: Computing the Proximity between Each Query and the Contexts")
+            for query in tqdm(queries):
+                embedding = self.bm25.transform(query, self.contexts[:20])
+                result.append(embedding)
 
-        doc_scores = []
-        doc_indices = []
-        for i in range(result.shape[0]):
-            sorted_result = np.argsort(result[i, :])[::-1]
-            doc_scores.append(result[i, :][sorted_result].tolist()[:k])
-            doc_indices.append(sorted_result.tolist()[:k])
+            result = np.array(result)
+            print("The shape of proximity each query:", result.shape)
+
+            doc_scores = []
+            doc_indices = []
+            for i in range(result.shape[0]):
+                sorted_result = np.argsort(result[i, :])[::-1]
+                doc_scores.append(result[i, :][sorted_result].tolist()[:k])
+                doc_indices.append(sorted_result.tolist()[:k])
+
+            with open(self.rank_path, "wb") as file:
+                pickle.dump(doc_indices, file)
+
         return doc_scores, doc_indices
 
     def retrieve_faiss(
@@ -369,7 +392,7 @@ if __name__ == "__main__":
         type=str,
         help="",
     )
-    parser.add_argument("--data_path", metavar="./data", type=str, help="")
+    parser.add_argument("--data_path", metavar="../data/rank.bin", type=str, help="")
     parser.add_argument(
         "--context_path", metavar="wikipedia_documents", type=str, help=""
     )
