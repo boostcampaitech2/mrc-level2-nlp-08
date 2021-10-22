@@ -30,7 +30,7 @@ def inference(settings, args):
 
     ##
     retriever = SparseRetrieval(
-        tokenize_fn=args.tokenizer, data_path="../data", context_path="wikipedia_documents.json"
+        tokenize_fn=args.tokenizer, data_path="../data", context_path="preprocess_wiki.json"
     )
     retriever.get_sparse_embedding()
     df = retriever.retrieve(args.dataset["validation"], topk=args.top_k_retrieval)

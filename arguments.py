@@ -9,7 +9,7 @@ from transformers.trainer_utils import IntervalStrategy
 class SettingsArguments:
     pretrained_model_name_or_path: str = field(default="klue/roberta-large")
     trained_model_path: str = field(default="./outputs")
-    trainset_path: str = field(default="../data/train_dataset")
+    trainset_path: str = field(default="../data/new_train_dataset")
     testset_path: str = field(default="../data/test_dataset")
     load_from_cache_file: bool = field(default=False)
     num_proc: Optional[int] = field(default=None)
@@ -18,11 +18,11 @@ class SettingsArguments:
 @dataclass
 class Arguments(TrainingArguments):
     per_device_train_batch_size: int = field(
-        default=4,
+        default=16,
         metadata={"help": "Batch size per GPU/TPU core/CPU for training."},
     )
     per_device_eval_batch_size: int = field(
-        default=4,
+        default=16,
         metadata={"help": "Batch size per GPU/TPU core/CPU for evaluation."},
     )
     gradient_accumulation_steps: int = field(
@@ -30,8 +30,8 @@ class Arguments(TrainingArguments):
         metadata={"help": "Number of updates steps to accumulate before performing a backward/update pass."},
     )
     learning_rate: float = field(
-        # default=6.819759978366989e-06,
-        default=3e-5,
+        default=6.819759978366989e-06,
+        # default=3e-5,
         metadata={"help": "The initial learning rate for AdamW."},
     )
     weight_decay: float = field(

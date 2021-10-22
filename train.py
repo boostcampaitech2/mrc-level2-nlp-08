@@ -23,17 +23,18 @@ from models.lstm_roberta import LSTMRobertaForQuestionAnswering
 def train(settings, args):
     args.config = AutoConfig.from_pretrained(settings.pretrained_model_name_or_path)
     args.tokenizer = AutoTokenizer.from_pretrained(settings.pretrained_model_name_or_path)
-    # model = AutoModelForQuestionAnswering.from_pretrained(
-    #     settings.pretrained_model_name_or_path, config=args.config
-    # )
-    model = LSTMRobertaForQuestionAnswering(settings.pretrained_model_name_or_path, config=args.config)
+    model = AutoModelForQuestionAnswering.from_pretrained(
+        settings.pretrained_model_name_or_path, config=args.config
+    )
+    # model = LSTMRobertaForQuestionAnswering(settings.pretrained_model_name_or_path, config=args.config)
 
     data_collator = DataCollatorWithPadding(
         tokenizer=args.tokenizer, pad_to_multiple_of=args.pad_to_multiple_of if args.fp16 else None
     )
     args.dataset = load_from_disk(settings.trainset_path)
 
-    train_dataset = args.dataset["train"]
+    # train_dataset = args.dataset["train"]
+    train_dataset = load_from_disk("../data/aeda_train_dataset/train_n_aug_1")  # 15542
     column_names = train_dataset.column_names
     train_dataset = train_dataset.map(
         send_along(preprocess, sent_along=args),
@@ -67,14 +68,14 @@ def train(settings, args):
 
 
 if __name__ == "__main__":
-    os.environ["WANDB_DISABLED"] = "true"
+    # os.environ["WANDB_DISABLED"] = "true"
 
-    # wandb.init(
-    #     project="MRC_add_lstm",
-    #     entity="chungye-mountain-sherpa",
-    #     name="batch4_gradaccum8",
-    #     group="lstm_nlayer_24",
-    # )
+    wandb.init(
+        project="MRC_aeda",
+        entity="chungye-mountain-sherpa",
+        name="n_aug_1",
+        group="n_aug",
+    )
 
     parser = HfArgumentParser((SettingsArguments, Arguments))
     settings, args = parser.parse_args_into_dataclasses()
