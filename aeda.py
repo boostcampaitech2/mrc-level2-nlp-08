@@ -50,39 +50,26 @@ class myAEDA(AEDA):
         return augmented_sentences
 
 
-def preprocess(text):
-    text = re.sub(r"\n", " ", text)
-    text = re.sub(r"\\n", " ", text)  # remove newline character
-    text = re.sub(r"\s+", " ", text)  # remove continuous spaces
-    text = re.sub(r"#", " ", text)
-
-    return text
-
-
-def preprocess_dataset(datasets):
+def merge_dataset(datasets):
     new_dataset = []
-    for i, data in enumerate(datasets):
-        context = data["context"]
-        start_idx = data["answers"]["answer_start"][0]
-
-        before_start = context[:start_idx]
-        after_start = context[start_idx:]
-
-        processed_before = preprocess(before_start)
-        processed_after = preprocess(after_start)
-        processed_context = processed_before + processed_after
-        moved_idx = len(before_start) - len(processed_before)
-
-        data["context"] = processed_context
-        data["answers"]["answer_start"][0] = start_idx - moved_idx
-        data["question"] = result[i]
+    for data in datasets:
         new_dataset.append(data)
+    print(f"origin data len: {len(new_dataset)}")
+    print(f"result len: {len(result)}")
+
+    for i, data in enumerate(datasets):
+        if repetition > 1:
+            for j in range(len(result[i])):
+                data["question"] = result[i][j]
+                new_dataset.append(data)
+        else:
+            data["question"] = result[i]
+            new_dataset.append(data)
 
     return new_dataset
 
 
-train_dataset = load_from_disk("../data/train_dataset/train/")
-# pd_train = pd.DataFrame(preprocess_dataset(train_dataset))
+train_dataset = load_from_disk("../data/new_train_dataset/train/")
 
 pp = pprint.PrettyPrinter()
 
@@ -93,14 +80,16 @@ aeda = myAEDA(morpheme_analyzer="Mecab", punc_ratio=0.2, punctuations=[".", ",",
 # features: ['__index_level_0__', 'answers', 'context', 'document_id', 'id', 'question', 'title'],
 question = train_dataset["question"]
 
+repetition = 8
+
 result = []
 for _, t in enumerate(tqdm(question)):
-    result.append(aeda(t, repetition=1))
+    result.append(aeda(t, repetition=repetition))
 
 # result = aeda(text, repetition=1)
 print(pp.pprint(result[:5]))
 
-new_train_data = pd.DataFrame(preprocess_dataset(train_dataset))
+new_train_data = pd.DataFrame(merge_dataset(train_dataset))
 
 train_features = Features(
     {
@@ -116,5 +105,5 @@ train_features = Features(
 )
 
 Dataset.from_pandas(new_train_data, features=train_features).save_to_disk(
-    "/opt/ml/data/new_train_dataset/train"
+    f"/opt/ml/data/aeda_train_dataset/train_n_aug_{repetition}"
 )
