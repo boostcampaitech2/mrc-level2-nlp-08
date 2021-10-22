@@ -80,7 +80,7 @@ class SparseRetrieval:
         else:
             print('Cannot find pickled ranking. Check if "rank.bin" is in data dir.')
             with timer("Making a new ranking: fitting the BM25"):
-                self.bm25.fit(self.contexts[:20])   
+                self.bm25.fit(self.contexts)   
 
     def build_faiss(self, num_clusters=64) -> NoReturn:
 
@@ -240,7 +240,7 @@ class SparseRetrieval:
 
             print("Making a New Ranking: Computing the Proximity between Each Query and the Contexts")
             for query in tqdm(queries):
-                embedding = self.bm25.transform(query, self.contexts[:20])
+                embedding = self.bm25.transform(query, self.contexts)
                 result.append(embedding)
 
             result = np.array(result)
