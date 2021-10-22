@@ -22,8 +22,8 @@ class LSTMRobertaForQuestionAnswering(RobertaPreTrainedModel):
         self.lstm = nn.LSTM(
             input_size=self.hidden_dim,
             hidden_size=self.hidden_dim,
-            num_layers=12,
-            dropout=0.2,
+            num_layers=24,
+            dropout=0.5,
             batch_first=True,
             bidirectional=True,
         )

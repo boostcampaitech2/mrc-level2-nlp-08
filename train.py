@@ -11,6 +11,8 @@ from transformers import (
     set_seed,
 )
 
+import wandb
+
 from arguments import SettingsArguments, Arguments
 from process import preprocess
 
@@ -67,7 +69,15 @@ def train(settings, args):
 
 
 if __name__ == "__main__":
-    os.environ["WANDB_DISABLED"] = "true"
+    # os.environ["WANDB_DISABLED"] = "true"
+
+    wandb.init(
+        project="MRC_add_lstm",
+        entity="chungye-mountain-sherpa",
+        name="batch4_gradaccum8",
+        group="lstm_nlayer_24",
+    )
+
     parser = HfArgumentParser((SettingsArguments, Arguments))
     settings, args = parser.parse_args_into_dataclasses()
     set_seed(args.seed)

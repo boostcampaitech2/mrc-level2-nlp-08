@@ -19,11 +19,11 @@ class SettingsArguments:
 @dataclass
 class Arguments(TrainingArguments):
     per_device_train_batch_size: int = field(
-        default=14,
+        default=4,
         metadata={"help": "Batch size per GPU/TPU core/CPU for training."},
     )
     per_device_eval_batch_size: int = field(
-        default=14,
+        default=4,
         metadata={"help": "Batch size per GPU/TPU core/CPU for evaluation."},
     )
     gradient_accumulation_steps: int = field(
