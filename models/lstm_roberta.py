@@ -1,35 +1,65 @@
-from typing_extensions import Concatenate
-from transformers import RobertaModel
 import torch.nn as nn
-import torch
-from transformers.modeling_outputs import QuestionAnsweringModelOutput
-from transformers.models.roberta.modeling_roberta import RobertaPreTrainedModel
-from transformers import AutoModelForQuestionAnswering, AutoModel
+from torch.nn import CrossEntropyLoss
+from torch.nn.modules import dropout
+from torch.nn.modules.conv import Conv1d
+
+from transformers.file_utils import (
+    add_code_sample_docstrings,
+    add_start_docstrings,
+    add_start_docstrings_to_model_forward,
+)
+from transformers.models.roberta.modeling_roberta import (
+    RobertaPreTrainedModel,
+    QuestionAnsweringModelOutput,
+    ROBERTA_START_DOCSTRING,
+    ROBERTA_INPUTS_DOCSTRING,
+    _TOKENIZER_FOR_DOC,
+    _CHECKPOINT_FOR_DOC,
+    _CONFIG_FOR_DOC,
+)
+from transformers import AutoModel
 
 
+@add_start_docstrings(
+    """
+    Roberta Model with a LSTM span classification head on top for extractive question-answering tasks like SQuAD (a linear
+    layers on top of the hidden-states output to compute `span start logits` and `span end logits`).
+    """,
+    ROBERTA_START_DOCSTRING,
+)
 class LSTMRobertaForQuestionAnswering(RobertaPreTrainedModel):
     _keys_to_ignore_on_load_unexpected = [r"pooler"]
     _keys_to_ignore_on_load_missing = [r"position_ids"]
 
-    def __init__(self, model_name_or_path, config):
+    def __init__(self, pretrained_model_name_or_path, config):
         super().__init__(config)
         self.num_labels = config.num_labels
 
-        self.roberta = AutoModel.from_pretrained(model_name_or_path, config)
+        assert "roberta" in config.model_type.lower(), "Base model does not match with any Roberta variants"
 
-        self.hidden_dim = config.hidden_size
+        self.roberta = AutoModel.from_pretrained(
+            pretrained_model_name_or_path, config=config, add_pooling_layer=False
+        )
+
+        hidden_dim = config.hidden_size
 
         self.lstm = nn.LSTM(
             input_size=self.hidden_dim,
             hidden_size=self.hidden_dim,
-            num_layers=24,
-            dropout=0.5,
+            num_layers=2,
+            dropout=0.2,
             batch_first=True,
             bidirectional=True,
         )
+        self.qa_outputs = nn.Linear(in_features=hidden_dim * 2, out_features=config.num_labels)
 
-        self.qa_outputs = nn.Linear(config.hidden_size * 2, config.num_labels)
-
+    @add_start_docstrings_to_model_forward(ROBERTA_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_code_sample_docstrings(
+        tokenizer_class=_TOKENIZER_FOR_DOC,
+        checkpoint=_CHECKPOINT_FOR_DOC,
+        output_type=QuestionAnsweringModelOutput,
+        config_class=_CONFIG_FOR_DOC,
+    )
     def forward(
         self,
         input_ids=None,
@@ -44,6 +74,16 @@ class LSTMRobertaForQuestionAnswering(RobertaPreTrainedModel):
         output_hidden_states=None,
         return_dict=None,
     ):
+        r"""
+        start_positions (:obj:`torch.LongTensor` of shape :obj:`(batch_size,)`, `optional`):
+            Labels for position (index) of the start of the labelled span for computing the token classification loss.
+            Positions are clamped to the length of the sequence (:obj:`sequence_length`). Position outside of the
+            sequence are not taken into account for computing the loss.
+        end_positions (:obj:`torch.LongTensor` of shape :obj:`(batch_size,)`, `optional`):
+            Labels for position (index) of the end of the labelled span for computing the token classification loss.
+            Positions are clamped to the length of the sequence (:obj:`sequence_length`). Position outside of the
+            sequence are not taken into account for computing the loss.
+        """
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
         outputs = self.roberta(
@@ -59,19 +99,12 @@ class LSTMRobertaForQuestionAnswering(RobertaPreTrainedModel):
         )
 
         sequence_output = outputs[0]
+        # print(f"{sequence_output.shape=}")
 
-        # LSTM
         lstm_output, (h, c) = self.lstm(sequence_output)
 
-        # print("---------------------------------")
-        # print(sequence_output.shape)  # torch.Size([64, 384, 768])
-        # print(lstm_output.shape)  # torch.Size([64, 384, 1536])
-        # print(h.shape)  # torch.Size([4, 64, 768])
-        # print(c.shape)  # torch.Size([4, 64, 768])
-        # print(concatenate_lstm_outputs.shape)  # torch.Size([64, 1536])
-        # print("---------------------------------")
-
         logits = self.qa_outputs(lstm_output)
+        # print(f"{logits.shape=}")
 
         start_logits, end_logits = logits.split(1, dim=-1)
         start_logits = start_logits.squeeze(-1).contiguous()
@@ -89,7 +122,7 @@ class LSTMRobertaForQuestionAnswering(RobertaPreTrainedModel):
             start_positions = start_positions.clamp(0, ignored_index)
             end_positions = end_positions.clamp(0, ignored_index)
 
-            loss_fct = nn.CrossEntropyLoss(ignore_index=ignored_index)
+            loss_fct = CrossEntropyLoss(ignore_index=ignored_index)
             start_loss = loss_fct(start_logits, start_positions)
             end_loss = loss_fct(end_logits, end_positions)
             total_loss = (start_loss + end_loss) / 2
