@@ -15,7 +15,12 @@ def preprocess(args, examples):
 
     examples["start_positions"] = []
     examples["end_positions"] = []
-    for i, (input_ids, token_type_ids, offset_mapping, overflow_to_sample_mapping) in enumerate(
+    for i, (
+        input_ids,
+        token_type_ids,
+        offset_mapping,
+        overflow_to_sample_mapping,
+    ) in enumerate(
         zip(
             examples["input_ids"],
             examples["token_type_ids"],
@@ -44,10 +49,12 @@ def preprocess(args, examples):
                 and answer_end_idx <= offset_end_idxs[context_token_end_idx]
             ):
                 answer_token_start_idx = context_token_start_idx + bisect_left(
-                    offset_start_idxs[context_token_start_idx:context_token_end_idx], answer_start_idx
+                    offset_start_idxs[context_token_start_idx:context_token_end_idx],
+                    answer_start_idx,
                 )
                 answer_token_end_idx = context_token_start_idx + bisect_left(
-                    offset_end_idxs[context_token_start_idx:context_token_end_idx], answer_end_idx
+                    offset_end_idxs[context_token_start_idx:context_token_end_idx],
+                    answer_end_idx,
                 )
 
         examples["start_positions"].append(answer_token_start_idx)
