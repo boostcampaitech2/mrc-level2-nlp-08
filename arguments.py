@@ -1,97 +1,3 @@
-<<<<<<< HEAD
-from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List, Optional
-
-
-@dataclass
-class ModelArguments:
-    """
-    Arguments pertaining to which model/config/tokenizer we are going to fine-tune from.
-    """
-
-    model_name_or_path: str = field(
-        default="klue/bert-base",
-        metadata={
-            "help": "Path to pretrained model or model identifier from huggingface.co/models"
-        },
-    )
-    config_name: Optional[str] = field(
-        default=None,
-        metadata={
-            "help": "Pretrained config name or path if not the same as model_name"
-        },
-    )
-    tokenizer_name: Optional[str] = field(
-        default=None,
-        metadata={
-            "help": "Pretrained tokenizer name or path if not the same as model_name"
-        },
-    )
-
-
-@dataclass
-class DataTrainingArguments:
-    """
-    Arguments pertaining to what data we are going to input our model for training and eval.
-    """
-
-    dataset_name: Optional[str] = field(
-        default="../data/train_dataset",
-        metadata={"help": "The name of the dataset to use."},
-    )
-    overwrite_cache: bool = field(
-        default=False,
-        metadata={"help": "Overwrite the cached training and evaluation sets"},
-    )
-    preprocessing_num_workers: Optional[int] = field(
-        default=None,
-        metadata={"help": "The number of processes to use for the preprocessing."},
-    )
-    max_seq_length: int = field(
-        default=384,
-        metadata={
-            "help": "The maximum total input sequence length after tokenization. Sequences longer "
-            "than this will be truncated, sequences shorter will be padded."
-        },
-    )
-    pad_to_max_length: bool = field(
-        default=False,
-        metadata={
-            "help": "Whether to pad all samples to `max_seq_length`. "
-            "If False, will pad the samples dynamically when batching to the maximum length in the batch (which can "
-            "be faster on GPU but will be slower on TPU)."
-        },
-    )
-    doc_stride: int = field(
-        default=128,
-        metadata={
-            "help": "When splitting up a long document into chunks, how much stride to take between chunks."
-        },
-    )
-    max_answer_length: int = field(
-        default=30,
-        metadata={
-            "help": "The maximum length of an answer that can be generated. This is needed because the start "
-            "and end predictions are not conditioned on one another."
-        },
-    )
-    eval_retrieval: bool = field(
-        default=True,
-        metadata={"help": "Whether to run passage retrieval using sparse embedding."},
-    )
-    num_clusters: int = field(
-        default=64, metadata={"help": "Define how many clusters to use for faiss."}
-    )
-    top_k_retrieval: int = field(
-        default=1,
-        metadata={
-            "help": "Define how many top-k passages to retrieve based on similarity."
-        },
-    )
-    use_faiss: bool = field(
-        default=False, metadata={"help": "Whether to build with faiss"}
-    )
-=======
 from dataclasses import dataclass, field
 from typing import Optional, Tuple
 
@@ -101,9 +7,9 @@ from transformers.trainer_utils import IntervalStrategy
 
 @dataclass
 class SettingsArguments:
-    pretrained_model_name_or_path: str = field(default="klue/roberta-small")
+    pretrained_model_name_or_path: str = field(default="klue/roberta-large")
     trained_model_path: str = field(default="./output")
-    trainset_path: str = field(default="../data/train_dataset")
+    trainset_path: str = field(default="/opt/ml/data/train_dataset")
     testset_path: str = field(default="../data/test_dataset")
     load_from_cache_file: bool = field(default=False)
     num_proc: Optional[int] = field(default=None)
@@ -128,29 +34,54 @@ class Arguments(TrainingArguments):
     )
 
     do_train: bool = field(default=True, metadata={"help": "Whether to run training."})
-    do_eval: bool = field(default=True, metadata={"help": "Whether to run eval on the dev set."})
+    do_eval: bool = field(
+        default=True, metadata={"help": "Whether to run eval on the dev set."}
+    )
     evaluation_strategy: IntervalStrategy = field(
-        default="epoch",
+        default="steps",
         metadata={"help": "The evaluation strategy to use."},
     )
-
+    seed: int = field(
+        default=107,
+        metadata={"help": "Random seed that will be set at the beginning of training."},
+    )
     per_device_train_batch_size: int = field(
         default=16, metadata={"help": "Batch size per GPU/TPU core/CPU for training."}
     )
     per_device_eval_batch_size: int = field(
         default=16, metadata={"help": "Batch size per GPU/TPU core/CPU for evaluation."}
     )
-
+    learning_rate: float = field(
+        default=1.809598615643362e-05,
+        metadata={"help": "The initial learning rate for AdamW."},
+    )
+    weight_decay: float = field(
+        default=0.19132033828553255,
+        metadata={"help": "Weight decay for AdamW if we apply some."},
+    )
     num_train_epochs: float = field(
-        default=0.05, metadata={"help": "Total number of training epochs to perform."}
+        default=2, metadata={"help": "Total number of training epochs to perform."}
+    )
+    gradient_accumulation_steps: int = field(
+        default=8,
+        metadata={
+            "help": "Number of updates steps to accumulate before performing a backward/update pass."
+        },
     )
 
     save_strategy: IntervalStrategy = field(
-        default="epoch",
+        default="steps",
         metadata={"help": "The checkpoint save strategy to use."},
     )
+    eval_steps: int = field(
+        default=100, metadata={"help": "Run an evaluation every X steps."}
+    )
+    save_steps: int = field(
+        default=100, metadata={"help": "Save checkpoint every X updates steps."}
+    )
+
     save_total_limit: Optional[int] = field(
-        default=1,
+        default=2,
         metadata={
             "help": (
                 "Limit the total amount of checkpoints."
@@ -163,11 +94,15 @@ class Arguments(TrainingArguments):
         default=True,
         metadata={"help": "Whether to use 16-bit (mixed) precision instead of 32-bit"},
     )
-    pad_to_multiple_of: int = field(default=8, metadata={"help": "Pad to multiple of set number"})
+    pad_to_multiple_of: int = field(
+        default=8, metadata={"help": "Pad to multiple of set number"}
+    )
 
     label_names: Optional[Tuple[str]] = field(
         default=("start_positions", "end_positions"),
-        metadata={"help": "The list of keys in your dictionary of inputs that correspond to the labels."},
+        metadata={
+            "help": "The list of keys in your dictionary of inputs that correspond to the labels."
+        },
     )
     load_best_model_at_end: Optional[bool] = field(
         default=True,
@@ -176,7 +111,8 @@ class Arguments(TrainingArguments):
         },
     )
     metric_for_best_model: Optional[str] = field(
-        default="f1", metadata={"help": "The metric to use to compare two different models."}
+        default="f1",
+        metadata={"help": "The metric to use to compare two different models."},
     )
 
     max_length: Optional[int] = field(default=384)
@@ -193,7 +129,9 @@ class Arguments(TrainingArguments):
     )
     resume_from_checkpoint: Optional[str] = field(
         default=None,
-        metadata={"help": "The path to a folder with a valid checkpoint for your model."},
+        metadata={
+            "help": "The path to a folder with a valid checkpoint for your model."
+        },
     )
     num_max_prediction: int = field(default=20)
     eval_retrieval: bool = field(
@@ -201,9 +139,14 @@ class Arguments(TrainingArguments):
         metadata={"help": "Whether to run passage retrieval using sparse embedding."},
     )
     top_k_retrieval: int = field(
-        default=1,
-        metadata={"help": "Define how many top-k passages to retrieve based on similarity."},
+        default=20,
+        metadata={
+            "help": "Define how many top-k passages to retrieve based on similarity."
+        },
     )
-    use_faiss: bool = field(default=False, metadata={"help": "Whether to build with faiss"})
-    num_clusters: int = field(default=64, metadata={"help": "Define how many clusters to use for faiss."})
->>>>>>> ee53db1fca5ca095624a51b16c0e996bce1b665d
+    use_faiss: bool = field(
+        default=False, metadata={"help": "Whether to build with faiss"}
+    )
+    num_clusters: int = field(
+        default=64, metadata={"help": "Define how many clusters to use for faiss."}
+    )

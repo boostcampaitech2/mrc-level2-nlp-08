@@ -1,3 +1,5 @@
 /__pycache__
 /wandb
 /output
+/retrieval/p_encoder
+/retrieval/q_encoder

@@ -1,9 +1,10 @@
 import argparse
 from retrieval_model import BertEncoder, ElectraEncoder, RobertaEncoder
 from utils_mrc import (
-    get_tensor_for_dense_with_negative,
     seed_everything,
     get_tensor_for_dense,
+    get_tensor_for_dense_temp,
+    get_tensor_for_dense_negative,
 )
 from datasets import load_from_disk
 from transformers import (
@@ -236,6 +237,14 @@ def train(args, p_encoder, q_encoder, train_dataset, valid_dataset):
 
 def train_with_negative(args, p_encoder, q_encoder, train_dataset, valid_dataset):
     # Dataloader
+    wandb.login()
+    wandb.init(
+        project="retrieval_aug",
+        entity="chungye-mountain-sherpa",
+        name="retrieval_add_negative",
+        group="klue-bert",
+    )
+
     train_sampler = RandomSampler(train_dataset)
     train_dataloader = DataLoader(
         train_dataset,
@@ -373,8 +382,6 @@ def train_with_negative(args, p_encoder, q_encoder, train_dataset, valid_dataset
             if train_step % 50 == 0:
                 valid_loss = 0
                 valid_acc = 0
-                print(len(valid_dataset))
-                print(len(valid_dataloader))
                 v_epoch_iterator = tqdm(valid_dataloader, desc="Iteration")
                 for step, batch in enumerate(v_epoch_iterator):
                     with torch.no_grad():
@@ -419,6 +426,7 @@ def train_with_negative(args, p_encoder, q_encoder, train_dataset, valid_dataset
                 print()
                 print(f"valid loss: {valid_loss}")
                 print(f"valid acc: {valid_acc}")
+                wandb.log({"valid loss": valid_loss, "valid acc": valid_acc})
                 if best_loss > valid_loss:
                     print("best model save")
                     p_encoder.save_pretrained(args.output_dir + "/p_encoder")
@@ -433,7 +441,7 @@ def train_with_negative(args, p_encoder, q_encoder, train_dataset, valid_dataset
 
         # valid_loss가 작아질 때만 저장
         # 두 모델을 합쳐서 trainer에 넘겨줄 수 있게 만들면 좀더 간단해질듯
-
+    wandb.finish()
     return p_encoder, q_encoder
 
 
@@ -441,20 +449,20 @@ def main(args):
     print(args)
     seed_everything(args.seed)
     tokenizer = AutoTokenizer.from_pretrained(args.model_checkpoint)
-    train_dataset = get_tensor_for_dense(
+    train_dataset = get_tensor_for_dense_negative(
         data_path=args.train_data_path,
+        bm25_path=args.train_bm25_path,
         max_context_seq_length=args.max_context_seq_length,
         max_question_seq_length=args.max_question_seq_length,
-        # num_neg=args.num_neg,
         tokenizer=tokenizer,
     )
-    valid_dataset = get_tensor_for_dense_with_negative(
+    valid_dataset = get_tensor_for_dense_negative(
         data_path=args.valid_data_path,
+        bm25_path=args.valid_bm25_path,
         max_context_seq_length=args.max_context_seq_length,
         max_question_seq_length=args.max_question_seq_length,
-        # num_neg=args.num_neg,
         tokenizer=tokenizer,
-    )  # valid도 전처리 된걸 사용하려고 임시적으로 with_negative로 가져옴,
+    )
 
     p_encoder = BertEncoder.from_pretrained(args.model_checkpoint)
     q_encoder = BertEncoder.from_pretrained(args.model_checkpoint)
@@ -477,7 +485,7 @@ def main(args):
         weight_decay=args.weight_decay,
     )
 
-    p_encoder, q_encoder = train(
+    p_encoder, q_encoder = train_with_negative(
         training_args, p_encoder, q_encoder, train_dataset, valid_dataset
     )
 
@@ -493,25 +501,37 @@ if __name__ == "__main__":
     parser.add_argument(
         "--train_data_path",
         type=str,
-        default="/opt/ml/data/train_dataset/retrieval_train_add_wiki_qa",
+        default="/opt/ml/data/train_dataset/train",
     )
     parser.add_argument(
         "--valid_data_path",
         type=str,
-        default="/opt/ml/data/train_dataset/elastic_retrieval_valid",
+        default="/opt/ml/data/train_dataset/validation",
+    )
+    parser.add_argument(
+        "--train_bm25_path",
+        type=str,
+        default="/opt/ml/data/elastic_train_100.bin",
+    )
+    parser.add_argument(
+        "--valid_bm25_path",
+        type=str,
+        default="/opt/ml/data/elastic_valid_100.bin",
     )
     parser.add_argument("--max_context_seq_length", type=int, default=512)
     parser.add_argument("--max_question_seq_length", type=int, default=30)
     parser.add_argument("--output_dir", type=str, default="retrieval")
     parser.add_argument("--evaluation_strategy", type=str, default="epoch")
-    parser.add_argument("--learning_rate", type=float, default=5e-5)
-    parser.add_argument("--per_device_train_batch_size", type=int, default=32)
-    parser.add_argument("--per_device_eval_batch_size", type=int, default=32)
-    parser.add_argument("--num_train_epochs", type=int, default=2)
+    parser.add_argument("--learning_rate", type=float, default=2e-5)
+    parser.add_argument("--per_device_train_batch_size", type=int, default=16)
+    parser.add_argument("--per_device_eval_batch_size", type=int, default=16)
+    parser.add_argument("--num_train_epochs", type=int, default=10)
     parser.add_argument("--weight_decay", type=float, default=0.0)
     parser.add_argument("--num_neg", type=int, default=2)
 
     args = parser.parse_args()
     # "kykim/bert-kor-base"
     # monologg/koelectra-base-v3-finetuned-korquad
+    # /opt/ml/data/train_dataset/train
+    # /opt/ml/data/train_dataset/retrieval_train_add_wiki_qa 위키 추가
     main(args=args)
