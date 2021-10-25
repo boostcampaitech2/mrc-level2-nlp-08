@@ -519,14 +519,14 @@ if __name__ == "__main__":
         default="/opt/ml/data/elastic_valid_100.bin",
     )
     parser.add_argument("--max_context_seq_length", type=int, default=512)
-    parser.add_argument("--max_question_seq_length", type=int, default=30)
+    parser.add_argument("--max_question_seq_length", type=int, default=64)
     parser.add_argument("--output_dir", type=str, default="retrieval")
     parser.add_argument("--evaluation_strategy", type=str, default="epoch")
     parser.add_argument("--learning_rate", type=float, default=2e-5)
     parser.add_argument("--per_device_train_batch_size", type=int, default=16)
     parser.add_argument("--per_device_eval_batch_size", type=int, default=16)
-    parser.add_argument("--num_train_epochs", type=int, default=10)
-    parser.add_argument("--weight_decay", type=float, default=0.0)
+    parser.add_argument("--num_train_epochs", type=int, default=50)
+    parser.add_argument("--weight_decay", type=float, default=0.01)
     parser.add_argument("--num_neg", type=int, default=2)
 
     args = parser.parse_args()

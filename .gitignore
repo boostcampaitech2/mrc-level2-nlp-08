@@ -2,4 +2,8 @@
 /wandb
 /output
 /retrieval/p_encoder
+/retrieval/p_encoder_best
 /retrieval/q_encoder
+/retrieval/q_encoder_best
+
+nohup.out
