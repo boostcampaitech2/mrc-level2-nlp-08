@@ -7,3 +7,17 @@
 /retrieval/q_encoder_best
 
 nohup.out
+# Python
+__pycache__
+
+# wandb
+wandb/
+
+# jupyter temp files
+.ipynb_checkpoints
+
+# saved model & predictions
+outputs/
+predictions/
+
+/.DS_Store

@@ -16,7 +16,7 @@ import wandb
 from arguments import SettingsArguments, Arguments
 from process import preprocess
 from metric import compute_metrics
-from utils import send_along
+from utils import send_along, check_no_error
 from models.lstm_roberta import LSTMRobertaForQuestionAnswering
 
 
@@ -36,9 +36,7 @@ def train(settings, args):
     )
     args.dataset = load_from_disk(settings.trainset_path)
 
-    train_dataset = args.dataset["elastic_10_train"]
-    print(train_dataset["context"][0])
-    print(args.learning_rate)
+    train_dataset = args.dataset["train"]
     column_names = train_dataset.column_names
     train_dataset = train_dataset.map(
         send_along(preprocess, sent_along=args),
