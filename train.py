@@ -32,9 +32,12 @@ def train(settings, args):
         tokenizer=args.tokenizer, pad_to_multiple_of=args.pad_to_multiple_of if args.fp16 else None
     )
     args.dataset = load_from_disk(settings.trainset_path)
-
     # train_dataset = args.dataset["train"]
-    train_dataset = load_from_disk("../data/aeda_train_dataset/train_n_aug_1")  # 15542
+
+    train_dataset = load_from_disk(
+        "../train_with_origin_gt_add_top_k_passage/not_include_answer_passage_train_es_top_4"
+    )
+
     column_names = train_dataset.column_names
     train_dataset = train_dataset.map(
         send_along(preprocess, sent_along=args),
@@ -45,6 +48,7 @@ def train(settings, args):
     )
 
     eval_dataset = args.dataset["validation"]
+    column_names = eval_dataset.column_names
     eval_dataset = eval_dataset.map(
         send_along(preprocess, sent_along=args),
         batched=True,
@@ -68,14 +72,15 @@ def train(settings, args):
 
 
 if __name__ == "__main__":
-    # os.environ["WANDB_DISABLED"] = "true"
+    os.environ["WANDB_DISABLED"] = "true"
 
-    wandb.init(
-        project="MRC_aeda",
-        entity="chungye-mountain-sherpa",
-        name="n_aug_1",
-        group="n_aug",
-    )
+    # wandb.init(
+    #     project="MRC_aeda",
+    #     entity="chungye-mountain-sherpa",
+    #     # name="topk_5_with_lstm_layers",
+    #     name="monologg/koelectra-base-v3-finetuned-korquad",
+    #     group="origin_gt_add_not_include_answer_concat",
+    # )
 
     parser = HfArgumentParser((SettingsArguments, Arguments))
     settings, args = parser.parse_args_into_dataclasses()

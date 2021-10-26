@@ -41,7 +41,7 @@ class LSTMRobertaForQuestionAnswering(RobertaPreTrainedModel):
             pretrained_model_name_or_path, config=config, add_pooling_layer=False
         )
 
-        hidden_dim = config.hidden_size
+        self.hidden_dim = config.hidden_size
 
         self.lstm = nn.LSTM(
             input_size=self.hidden_dim,
@@ -51,7 +51,7 @@ class LSTMRobertaForQuestionAnswering(RobertaPreTrainedModel):
             batch_first=True,
             bidirectional=True,
         )
-        self.qa_outputs = nn.Linear(in_features=hidden_dim * 2, out_features=config.num_labels)
+        self.qa_outputs = nn.Linear(in_features=self.hidden_dim * 2, out_features=config.num_labels)
 
     @add_start_docstrings_to_model_forward(ROBERTA_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(

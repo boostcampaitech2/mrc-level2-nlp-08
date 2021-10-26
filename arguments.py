@@ -30,16 +30,17 @@ class Arguments(TrainingArguments):
         metadata={"help": "Number of updates steps to accumulate before performing a backward/update pass."},
     )
     learning_rate: float = field(
-        default=6.819759978366989e-06,
+        default=1.809598615643362e-05,
+        # default=6.819759978366989e-06,
         # default=3e-5,
         metadata={"help": "The initial learning rate for AdamW."},
     )
     weight_decay: float = field(
-        default=0.17537006645417813,
+        default=0.19132033828553255,
         metadata={"help": "Weight decay for AdamW if we apply some."},
     )
     num_train_epochs: float = field(
-        default=10.0, metadata={"help": "Total number of training epochs to perform."}
+        default=5.0, metadata={"help": "Total number of training epochs to perform."}
     )
     output_dir: str = field(
         default="output",
@@ -57,7 +58,7 @@ class Arguments(TrainingArguments):
         },
     )
     seed: int = field(
-        default=21, metadata={"help": "Random seed that will be set at the beginning of training."}
+        default=107, metadata={"help": "Random seed that will be set at the beginning of training."}
     )
     do_train: bool = field(default=True, metadata={"help": "Whether to run training."})
     do_eval: bool = field(default=True, metadata={"help": "Whether to run eval on the dev set."})
@@ -128,7 +129,7 @@ class Arguments(TrainingArguments):
         metadata={"help": "Whether to run passage retrieval using sparse embedding."},
     )
     top_k_retrieval: int = field(
-        default=20,
+        default=1,
         metadata={"help": "Define how many top-k passages to retrieve based on similarity."},
     )
     use_faiss: bool = field(default=False, metadata={"help": "Whether to build with faiss"})
