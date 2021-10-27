@@ -77,26 +77,26 @@ def preprocess_testset(args, examples):
 
 def preprocess_g(args, examples):
     # Prepocessing Query Part
-    formatted_question = list(map(lambda text: f"question: {text} context:", examples["question"]))
+    formatted_question = list(map(lambda text: f"[질문]: {text} [지문]: ", examples["question"]))
     model_inputs = args.tokenizer(
         formatted_question,
         examples["context"],
         truncation="only_second",
-        max_length=args.max_length-1,
+        max_length=512,
+        #max_length=args.max_length,
         stride=args.stride,
         return_overflowing_tokens=True,
-        add_special_tokens=False
     )
-    # add </s> at the end of the sentence
-    model_inputs["input_ids"] = list(map(lambda id: id + [1], model_inputs["input_ids"]))
-    # attention mask
-    model_inputs["attention_mask"] = list(map(lambda mask: mask + [1], model_inputs["attention_mask"]))
+    # add </s> at the end of the sentence kobart에서는 필요없어보임
+    # model_inputs["input_ids"] = list(map(lambda id: id + [1], model_inputs["input_ids"]))
+    # attention mask kobart에서는 필요 없음
+    # model_inputs["attention_mask"] = list(map(lambda mask: mask + [1], model_inputs["attention_mask"]))
 
     # Preprocessing Answers
     answers = [f'{a["text"][0]} </s>' for a in examples['answers']]
     
     with args.tokenizer.as_target_tokenizer():
-        targets = args.tokenizer(answers, add_special_tokens=False)
+        targets = args.tokenizer(answers)
 
 
     model_inputs["labels"] = []

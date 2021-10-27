@@ -122,7 +122,8 @@ def compute_metrics(args, outputs: EvalPrediction):
 
 def compute_metrics_g(args, eval_predictions):
     dataset = args.dataset["validation"]
-    preds, labels = eval_predictions
+    preds, labels, scores = eval_predictions
+    
     if isinstance(preds, tuple):
         preds = preds[0]
     
@@ -131,11 +132,10 @@ def compute_metrics_g(args, eval_predictions):
 
     decoded_preds = args.tokenizer.batch_decode(preds, skip_special_tokens=True)
     decoded_labels = args.tokenizer.batch_decode(labels, skip_special_tokens=True)
-    # 간단한 post-processing
-    decoded_preds, decoded_labels = postprocess_text(decoded_preds, decoded_labels)
     
+    decoded_preds, decoded_labels = postprocess_text(decoded_preds, decoded_labels)
     prediction_cadidates_info = defaultdict(list)
-    for pred, ans, overflow_to_sample_mapping in zip(decoded_preds, decoded_labels, args.processed_eval_dataset["overflow_to_sample_mapping"]):
+    for pred, ans, score, overflow_to_sample_mapping in zip(decoded_preds, decoded_labels, scores, args.processed_eval_dataset["overflow_to_sample_mapping"]):
         id = dataset["id"][overflow_to_sample_mapping]
         context = dataset["context"][overflow_to_sample_mapping]
         question = dataset["question"][overflow_to_sample_mapping]
@@ -144,21 +144,20 @@ def compute_metrics_g(args, eval_predictions):
                             "text": context,
                             "question": question,
                             "prediction": pred,
-                            "answer": ans
+                            "answer": ans,
+                            "score": float(score) if isinstance(score, (np.float16, np.float32, np.float64)) else score
                         }
                     )
-    """
-    predictions_info_per_id = {
-        id: predictions_info
-        for id, predictions_info in prediction_cadidates_info.items()
-    }
-    """
+    
     formatted_predictions = []
-    references = []
-
+    #references = []
+    
     for id in prediction_cadidates_info.keys():
-        formatted_predictions.append({"id": id, "prediction_text": prediction_cadidates_info[id][0]["prediction"]})
-        references.append({"id": id, "answers": {"text": prediction_cadidates_info[id][0]["answer"], "answer_start" : [0]}})
+        formatted_predictions.append({"id": id, "prediction_text": sorted(prediction_cadidates_info[id], key=lambda x: x["score"], reverse=True)[0]["prediction"]})
+        #references.append({"id": id, "answers": {"text": prediction_cadidates_info[id][0]["answer"], "answer_start" : []}})
+    references = [
+        {"id": example["id"], "answers": example["answers"]} for example in dataset["validation"]
+    ]
     
     metric = load_metric("squad")
 
