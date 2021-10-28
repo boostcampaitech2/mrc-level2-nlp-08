@@ -82,26 +82,27 @@ def preprocess_g(args, examples):
         formatted_question,
         examples["context"],
         truncation="only_second",
-        max_length=128,
-        #max_length=args.max_length,
+        max_length=args.max_length,
         stride=args.stride,
         return_overflowing_tokens=True,
     )
-    # add </s> at the end of the sentence kobart에서는 필요없어보임
-    # model_inputs["input_ids"] = list(map(lambda id: id + [1], model_inputs["input_ids"]))
-    # attention mask kobart에서는 필요 없음
-    # model_inputs["attention_mask"] = list(map(lambda mask: mask + [1], model_inputs["attention_mask"]))
+
 
     # Preprocessing Answers
+    # For each shards of context, I'll put None'</s>' if the answer doesn't exist in the context.
     answers = [f'{a["text"][0]} </s>' for a in examples['answers']]
     
     with args.tokenizer.as_target_tokenizer():
         targets = args.tokenizer(answers)
-
+        nonestring = args.tokenizer('</s>')
 
     model_inputs["labels"] = []
-    model_inputs["id"] = []
-    for i in model_inputs["overflow_to_sample_mapping"]:
-        model_inputs["labels"].append(targets["input_ids"][i])
-        model_inputs["id"].append(examples["id"][i])
+    for index, sample_mapping in enumerate(model_inputs["overflow_to_sample_mapping"]):
+        txt = args.tokenizer.decode(model_inputs["input_ids"][index])
+        tofind = examples['answers'][sample_mapping]['text'][0]
+        if args.tokenizer.decode(model_inputs["input_ids"][index]).find(examples['answers'][sample_mapping]['text'][0]) != -1:
+            model_inputs["labels"].append(targets["input_ids"][sample_mapping])
+        else:
+            model_inputs["labels"].append(nonestring['input_ids'])
+    
     return model_inputs

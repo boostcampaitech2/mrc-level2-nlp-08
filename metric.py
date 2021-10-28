@@ -135,10 +135,13 @@ def compute_metrics_g(args, eval_predictions):
     
     decoded_preds, decoded_labels = postprocess_text(decoded_preds, decoded_labels)
     prediction_cadidates_info = defaultdict(list)
+
     for pred, ans, score, overflow_to_sample_mapping in zip(decoded_preds, decoded_labels, scores, args.processed_eval_dataset["overflow_to_sample_mapping"]):
         id = dataset["id"][overflow_to_sample_mapping]
         context = dataset["context"][overflow_to_sample_mapping]
         question = dataset["question"][overflow_to_sample_mapping]
+        if ans == "":
+            ans = "Answer Not Found"
         prediction_cadidates_info[id].append(
                         {
                             "text": context,
@@ -150,20 +153,28 @@ def compute_metrics_g(args, eval_predictions):
                     )
     
     formatted_predictions = []
-    #references = []
     
     for id in prediction_cadidates_info.keys():
-        formatted_predictions.append({"id": id, "prediction_text": sorted(prediction_cadidates_info[id], key=lambda x: x["score"], reverse=True)[0]["prediction"]})
-        #references.append({"id": id, "answers": {"text": prediction_cadidates_info[id][0]["answer"], "answer_start" : []}})
-    references = [
-        {"id": example["id"], "answers": example["answers"]} for example in dataset
-    ]
+        sorted_pred = sorted(prediction_cadidates_info[id], key=lambda x: x["score"], reverse=True)
+        text_found = False
+        for pred in sorted_pred:
+            if pred["prediction"] != "Answer Not Found":
+                final_text = pred["prediction"]
+                text_found = True
+                break
+        formatted_predictions.append({"id": id, "prediction_text": final_text if text_found else sorted_pred[0]["prediction"]})
+    references = [{"id": example["id"], "answers": example["answers"]} for example in dataset]
     
-    metric = load_metric("squad")
+    ## to make best prediction ##
+    for prediction in formatted_predictions:
+        final_prediction = prediction["prediction_text"]
+        prediction_cadidates_info[prediction["id"]] = [f"final prediction : {final_prediction}"] + prediction_cadidates_info[prediction["id"]]
 
     with open(path.join(args.output_dir, "generation.json"), "w", encoding="utf-8") as json_output:
         json.dump(prediction_cadidates_info, json_output, ensure_ascii=False, indent=4)
     
+    metric = load_metric("squad")
+
     return metric.compute(predictions=formatted_predictions, references=references)
 
 def postprocess_text(preds, labels):
@@ -174,7 +185,7 @@ def postprocess_text(preds, labels):
     
     preds = [pred.strip() for pred in preds]
     # no empty string
-    preds = ["empty" if pred == "" else pred for pred in preds]
+    preds = ["Answer Not Found" if pred == "" else pred for pred in preds]
     labels = [label.strip() for label in labels]
 
     return preds, labels

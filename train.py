@@ -67,14 +67,14 @@ def train_g(settings, args):
 
 
 if __name__ == "__main__":
-    os.environ["WANDB_DISABLED"] = "true"
+    # os.environ["WANDB_DISABLED"] = "true"
     parser = HfArgumentParser((SettingsArguments, Seq2SeqArguments))
     settings, args = parser.parse_args_into_dataclasses()
     wandb.login()
     wandb.init(
         project="generative_qa",
         entity="chungye-mountain-sherpa",
-        name='max_length_changed',
+        name='256 with no answer',
         group='kobart-prototype',
     )
 
