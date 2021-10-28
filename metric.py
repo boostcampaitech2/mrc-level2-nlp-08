@@ -156,7 +156,7 @@ def compute_metrics_g(args, eval_predictions):
         formatted_predictions.append({"id": id, "prediction_text": sorted(prediction_cadidates_info[id], key=lambda x: x["score"], reverse=True)[0]["prediction"]})
         #references.append({"id": id, "answers": {"text": prediction_cadidates_info[id][0]["answer"], "answer_start" : []}})
     references = [
-        {"id": example["id"], "answers": example["answers"]} for example in dataset["validation"]
+        {"id": example["id"], "answers": example["answers"]} for example in dataset
     ]
     
     metric = load_metric("squad")

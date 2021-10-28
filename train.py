@@ -74,7 +74,7 @@ if __name__ == "__main__":
     wandb.init(
         project="generative_qa",
         entity="chungye-mountain-sherpa",
-        name='custom trainer introduced',
+        name='max_length_changed',
         group='kobart-prototype',
     )
 

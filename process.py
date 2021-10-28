@@ -82,7 +82,7 @@ def preprocess_g(args, examples):
         formatted_question,
         examples["context"],
         truncation="only_second",
-        max_length=512,
+        max_length=128,
         #max_length=args.max_length,
         stride=args.stride,
         return_overflowing_tokens=True,

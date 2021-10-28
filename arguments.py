@@ -76,7 +76,7 @@ class Seq2SeqArguments(Seq2SeqTrainingArguments):
     pad_to_multiple_of: int = field(default=8, metadata={"help": "Pad to multiple of set number"})
     max_length: Optional[int] = field(default=1024)
     stride: int = field(
-        default=128,
+        default=64,
         metadata={"help": "The stride to use when handling overflow."},
     )
     max_answer_length: int = field(
