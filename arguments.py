@@ -60,7 +60,7 @@ class Arguments(TrainingArguments):
         metadata={"help": "Weight decay for AdamW if we apply some."},
     )
     num_train_epochs: float = field(
-        default=2, metadata={"help": "Total number of training epochs to perform."}
+        default=3, metadata={"help": "Total number of training epochs to perform."}
     )
     gradient_accumulation_steps: int = field(
         default=8,
@@ -74,10 +74,10 @@ class Arguments(TrainingArguments):
         metadata={"help": "The checkpoint save strategy to use."},
     )
     eval_steps: int = field(
-        default=100, metadata={"help": "Run an evaluation every X steps."}
+        default=25, metadata={"help": "Run an evaluation every X steps."}
     )
     save_steps: int = field(
-        default=100, metadata={"help": "Save checkpoint every X updates steps."}
+        default=25, metadata={"help": "Save checkpoint every X updates steps."}
     )
 
     save_total_limit: Optional[int] = field(

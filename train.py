@@ -16,7 +16,7 @@ import wandb
 from arguments import SettingsArguments, Arguments
 from process import preprocess
 from metric import compute_metrics
-from utils import send_along, check_no_error
+from utils import send_along
 from models.lstm_roberta import LSTMRobertaForQuestionAnswering
 
 
@@ -36,7 +36,7 @@ def train(settings, args):
     )
     args.dataset = load_from_disk(settings.trainset_path)
 
-    train_dataset = args.dataset["train"]
+    train_dataset = args.dataset["hybrid_5_train"]
     column_names = train_dataset.column_names
     train_dataset = train_dataset.map(
         send_along(preprocess, sent_along=args),
@@ -83,6 +83,6 @@ if __name__ == "__main__":
         project="retrieval_aug",
         entity="chungye-mountain-sherpa",
         name=f"base: {settings.pretrained_model_name_or_path}",
-        group="concat10",
+        group="concat5",
     )
     train(settings, args)

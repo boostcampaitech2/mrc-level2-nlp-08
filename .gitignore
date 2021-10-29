@@ -5,6 +5,8 @@
 /retrieval/p_encoder_best
 /retrieval/q_encoder
 /retrieval/q_encoder_best
+/retrieval/q_encoder_rec1
+/retrieval/p_encoder_rec1
 
 nohup.out
 # Python
