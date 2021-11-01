@@ -2,14 +2,14 @@ from dataclasses import dataclass, field
 
 from importlib.metadata import metadata
 from typing import Optional, Tuple
-from transformers import TrainingArguments, Seq2SeqTrainingArguments
+from transformers import Seq2SeqTrainingArguments
 from transformers.trainer_utils import IntervalStrategy
 
 
 @dataclass
 class SettingsArguments:
     pretrained_model_name_or_path: str = field(default="hyunwoongko/kobart")
-    trained_model_path: str = field(default="./output")
+    trained_model_path: str = field(default="./output/checkpoint-9936")
     trainset_path: str = field(default="../../data/train_dataset")
     testset_path: str = field(default="../../data/test_dataset")
     load_from_cache_file: bool = field(default=True)
@@ -54,7 +54,7 @@ class Seq2SeqArguments(Seq2SeqTrainingArguments):
         metadata={"help": "The evaluation strategy to use."},
     )
     #eval_steps: int = field(default=10, metadata={"help": "Log every X updates steps."})
-    logging_steps: int = field(default=100, metadata={"help": "logging steps"})
+    logging_steps: int = field(default=500, metadata={"help": "logging steps"})
     per_device_train_batch_size: int = field(
         default=16, metadata={"help": "Batch size per GPU/TPU core/CPU for training."}
     )
@@ -63,7 +63,7 @@ class Seq2SeqArguments(Seq2SeqTrainingArguments):
     )
 
     num_train_epochs: float = field(
-        default=5, metadata={"help": "Total number of training epochs to perform."}
+        default=10, metadata={"help": "Total number of training epochs to perform."}
     )
     save_strategy: IntervalStrategy = field(
         default="epoch",
@@ -83,9 +83,9 @@ class Seq2SeqArguments(Seq2SeqTrainingArguments):
         metadata={"help": "Whether to use 16-bit (mixed) precision instead of 32-bit"},
     )
     pad_to_multiple_of: int = field(default=8, metadata={"help": "Pad to multiple of set number"})
-    max_length: Optional[int] = field(default=1024, metadata={"help": "sequence_length"})
+    max_length: Optional[int] = field(default=128, metadata={"help": "sequence_length"})
     stride: int = field(
-        default=128,
+        default=64,
         metadata={"help": "The stride to use when handling overflow."},
     )
     max_answer_length: int = field(
@@ -100,7 +100,7 @@ class Seq2SeqArguments(Seq2SeqTrainingArguments):
         metadata={"help": "Whether to run passage retrieval using sparse embedding."},
     )
     top_k_retrieval: int = field(
-        default=1,
+        default=20,
         metadata={"help": "Define how many top-k passages to retrieve based on similarity."},
     )
     use_faiss: bool = field(default=False, metadata={"help": "Whether to build with faiss"})

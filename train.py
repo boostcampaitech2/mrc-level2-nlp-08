@@ -74,8 +74,8 @@ if __name__ == "__main__":
     wandb.init(
         project="generative_qa",
         entity="chungye-mountain-sherpa",
-        name='256 with no answer',
-        group='kobart-prototype',
+        name='len128 torch 1.10.0',
+        group='kobart-baseline',
     )
 
     set_seed(args.seed)

@@ -120,7 +120,7 @@ def compute_metrics(args, outputs: EvalPrediction):
     return metric.compute(predictions=predictions, references=references)
 
 
-def compute_metrics_g(args, eval_predictions):
+def postprocess_g(args, eval_predictions):
     dataset = args.dataset["validation"]
     preds, labels, scores = eval_predictions
     
@@ -163,19 +163,33 @@ def compute_metrics_g(args, eval_predictions):
                 text_found = True
                 break
         formatted_predictions.append({"id": id, "prediction_text": final_text if text_found else sorted_pred[0]["prediction"]})
-    references = [{"id": example["id"], "answers": example["answers"]} for example in dataset]
     
-    ## to make best prediction ##
+    
+    ## Get the best prediction out of candidates ##
+    ## for the information, look generation json, and look prediction json for final submission ##
+
+    prediction_json = {}
     for prediction in formatted_predictions:
         final_prediction = prediction["prediction_text"]
         prediction_cadidates_info[prediction["id"]] = [f"final prediction : {final_prediction}"] + prediction_cadidates_info[prediction["id"]]
+        prediction_json[prediction["id"]] = prediction_cadidates_info[prediction["id"]]
+
 
     with open(path.join(args.output_dir, "generation.json"), "w", encoding="utf-8") as json_output:
         json.dump(prediction_cadidates_info, json_output, ensure_ascii=False, indent=4)
-    
+
+    with open(path.join(args.output_dir, "predictions.json"), "w", encoding="utf-8") as json_output:
+        json.dump(prediction_json, json_output, ensure_ascii=False, indent=4)
+
+    return formatted_predictions
+
+
+def compute_metrics_g(args, eval_predictions):
+    predictions = postprocess_g(args, eval_predictions)
+    references = [{"id": example["id"], "answers": example["answers"]} for example in args.dataset["validation"]]
     metric = load_metric("squad")
 
-    return metric.compute(predictions=formatted_predictions, references=references)
+    return metric.compute(predictions=predictions, references=references)
 
 def postprocess_text(preds, labels):
     

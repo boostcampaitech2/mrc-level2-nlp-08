@@ -97,6 +97,7 @@ class SparseRetrieval:
             print("Embedding pickle load.")
         else:
             print("Build passage embedding")
+            print(type(self.contexts[0]))
             self.p_embedding = self.tfidfv.fit_transform(self.contexts)
             print(self.p_embedding.shape)
             with open(emd_path, "wb") as file:

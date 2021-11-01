@@ -75,6 +75,21 @@ def preprocess_testset(args, examples):
         examples.pop("token_type_ids")
     return examples
 
+
+def preprocess_testset_g(args, examples):
+    formatted_question = list(map(lambda text: f"[질문]: {text} [지문]: ", examples["question"]))
+    examples = args.tokenizer(
+        formatted_question,
+        examples["context"],
+        truncation="only_second",
+        max_length=args.max_length,
+        stride=args.stride,
+        return_overflowing_tokens=True,
+    )
+
+    return examples
+
+
 def preprocess_g(args, examples):
     # Prepocessing Query Part
     formatted_question = list(map(lambda text: f"[질문]: {text} [지문]: ", examples["question"]))
@@ -98,8 +113,6 @@ def preprocess_g(args, examples):
 
     model_inputs["labels"] = []
     for index, sample_mapping in enumerate(model_inputs["overflow_to_sample_mapping"]):
-        txt = args.tokenizer.decode(model_inputs["input_ids"][index])
-        tofind = examples['answers'][sample_mapping]['text'][0]
         if args.tokenizer.decode(model_inputs["input_ids"][index]).find(examples['answers'][sample_mapping]['text'][0]) != -1:
             model_inputs["labels"].append(targets["input_ids"][sample_mapping])
         else:
