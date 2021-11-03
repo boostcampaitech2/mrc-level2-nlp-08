@@ -15,6 +15,7 @@ def preprocess(args, examples):
 
     examples["start_positions"] = []
     examples["end_positions"] = []
+    # examples["query_passage_embedding"] = []
     for i, (input_ids, token_type_ids, offset_mapping, overflow_to_sample_mapping) in enumerate(
         zip(
             examples["input_ids"],
@@ -25,6 +26,7 @@ def preprocess(args, examples):
     ):
         cls_token_idx = input_ids.index(args.tokenizer.cls_token_id)
         answer_token_start_idx = answer_token_end_idx = cls_token_idx
+        sep_token_idx = input_ids.index(args.tokenizer.sep_token_id)
 
         token_type_ids = examples.sequence_ids(i)
         examples["token_type_ids"][i] = token_type_ids
@@ -53,9 +55,14 @@ def preprocess(args, examples):
         examples["start_positions"].append(answer_token_start_idx)
         examples["end_positions"].append(answer_token_end_idx)
 
+        # question_example = args.tokenizer.decode(input_ids[:sep_token_idx])
+        # passage_example = args.tokenizer.decode(input_ids[context_token_start_idx:context_token_end_idx])
+        # examples["query_passage_embedding"].append(args.sroberta.encode([question_example, passage_example]))
+
     args.token_type_ids = examples["token_type_ids"]
     if "roberta" in args.config.model_type.lower():
         examples.pop("token_type_ids")
+
     return examples
 
 
@@ -70,7 +77,12 @@ def preprocess_testset(args, examples):
         return_offsets_mapping=True,
     )
 
+    # examples["query_passage_embedding"] = []
+    # for i in range(len(examples['question'])):
+    #     examples["query_passage_embedding"].append(args.sroberta.encode([examples['question'][i], examples['context'][i]]))
+
     args.token_type_ids = examples["token_type_ids"]
     if "roberta" in args.config.model_type.lower():
         examples.pop("token_type_ids")
+
     return examples

@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 from torch.nn import CrossEntropyLoss
 from torch.nn.modules import dropout
@@ -27,7 +28,7 @@ from transformers import AutoModel
     """,
     ROBERTA_START_DOCSTRING,
 )
-class LSTMRobertaForQuestionAnswering(RobertaPreTrainedModel):
+class Conv1DRobertaForQuestionAnswering(RobertaPreTrainedModel):
     _keys_to_ignore_on_load_unexpected = [r"pooler"]
     _keys_to_ignore_on_load_missing = [r"position_ids"]
 
@@ -43,10 +44,13 @@ class LSTMRobertaForQuestionAnswering(RobertaPreTrainedModel):
 
         self.hidden_dim = config.hidden_size
 
-        encoder_layer = nn.TransformerEncoderLayer(d_model=self.hidden_dim, nhead=16)
-        self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=8)
+        self.qa_outputs = nn.Linear(in_features=self.hidden_dim * 3, out_features=config.num_labels)
 
-        self.qa_outputs = nn.Linear(in_features=self.hidden_dim, out_features=config.num_labels)
+        self.conv1d_k1 = nn.Conv1d(in_channels=self.hidden_dim, out_channels=self.hidden_dim, kernel_size=1, padding=0)
+        self.conv1d_k3 = nn.Conv1d(in_channels=self.hidden_dim, out_channels=self.hidden_dim, kernel_size=3, padding=1)
+        self.conv1d_k5 = nn.Conv1d(in_channels=self.hidden_dim, out_channels=self.hidden_dim, kernel_size=5, padding=2)
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(p=0.3)
 
     @add_start_docstrings_to_model_forward(ROBERTA_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(
@@ -93,12 +97,15 @@ class LSTMRobertaForQuestionAnswering(RobertaPreTrainedModel):
             return_dict=return_dict,
         )
 
-        sequence_output = outputs[0]
+        sequence_output = outputs[0].permute(0, 2, 1)
         # print(f"{sequence_output.shape=}")
 
-        transformer_output = self.transformer_encoder(sequence_output)
+        cnn_k1_output = self.relu(self.conv1d_k1(sequence_output))
+        cnn_k3_output = self.relu(self.conv1d_k3(sequence_output))
+        cnn_k5_output = self.relu(self.conv1d_k5(sequence_output))
+        concat_cnn_output = torch.cat((cnn_k1_output, cnn_k3_output, cnn_k5_output), 1)
 
-        logits = self.qa_outputs(transformer_output)
+        logits = self.qa_outputs(self.dropout(concat_cnn_output.permute(0, 2, 1)))
         # print(f"{logits.shape=}")
 
         start_logits, end_logits = logits.split(1, dim=-1)
