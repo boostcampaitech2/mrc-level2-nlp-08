@@ -18,6 +18,8 @@ from process import preprocess
 from metric import compute_metrics
 from utils import send_along
 from models.lstm_roberta import LSTMRobertaForQuestionAnswering
+from models.cnn_head import Conv1DRobertaForQuestionAnswering
+from models.frozen_head import CustomModel
 
 
 def train(settings, args):
@@ -26,7 +28,10 @@ def train(settings, args):
     model = AutoModelForQuestionAnswering.from_pretrained(
         settings.pretrained_model_name_or_path, config=args.config
     )
+    # model = Conv1DRobertaForQuestionAnswering(settings.pretrained_model_name_or_path, config=args.config)
     # model = LSTMRobertaForQuestionAnswering(settings.pretrained_model_name_or_path, config=args.config)
+    # model = CustomModel(settings.pretrained_model_name_or_path, config=args.config)
+    # print(model)
 
     data_collator = DataCollatorWithPadding(
         tokenizer=args.tokenizer, pad_to_multiple_of=args.pad_to_multiple_of if args.fp16 else None
@@ -35,7 +40,14 @@ def train(settings, args):
     # train_dataset = args.dataset["train"]
 
     train_dataset = load_from_disk(
+        # "../sentence_shuffle"
         "../train_with_origin_gt_add_top_k_passage/not_include_answer_passage_train_es_top_4"
+        # "../passage_shuffle/concat_train_gt_1"
+        # "../passage_random_shuffle",
+        # "../train_no_train_wiki_passage_top_5_include_answer"
+        # "../hb_train_no_train_passage_k_5"
+        # "../not_include_answer_passage_train_es_top_8"
+        # "../qg_title_concat_4"
     )
 
     column_names = train_dataset.column_names
@@ -67,8 +79,12 @@ def train(settings, args):
         data_collator=data_collator,
         compute_metrics=send_along(compute_metrics, sent_along=args),
     )
-    trainer.train()
+    if args.resume_from_checkpoint:
+        trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
+    else:
+        trainer.train()
     trainer.save_model()
+    # trainer.evaluate()
 
 
 if __name__ == "__main__":
@@ -78,8 +94,8 @@ if __name__ == "__main__":
     #     project="MRC_aeda",
     #     entity="chungye-mountain-sherpa",
     #     # name="topk_5_with_lstm_layers",
-    #     name="monologg/koelectra-base-v3-finetuned-korquad",
-    #     group="origin_gt_add_not_include_answer_concat",
+    #     name="sota_train_with_cnn_and_lstm_head",
+    #     group="qg_dataset",
     # )
 
     parser = HfArgumentParser((SettingsArguments, Arguments))

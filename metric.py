@@ -76,7 +76,7 @@ def postprocess(args, outputs: EvalPrediction):
     predictions_info_per_id = fill_empty_ids(predictions_info_per_id, dataset["id"])
 
     for predictions_info in predictions_info_per_id.values():
-        scores = np.array([prediction_info.pop("score") for prediction_info in predictions_info])
+        scores = np.array([np.exp(prediction_info.pop("score")) for prediction_info in predictions_info])
         probabilities = scores / scores.sum()
         for probability, prediction_info in zip(probabilities, predictions_info):
             prediction_info["probability"] = probability

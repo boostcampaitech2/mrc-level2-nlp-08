@@ -10,7 +10,7 @@ class SettingsArguments:
     pretrained_model_name_or_path: str = field(default="klue/roberta-large")
     trained_model_path: str = field(default="./outputs")
     trainset_path: str = field(default="../data/new_train_dataset")
-    testset_path: str = field(default="../data/test_dataset")
+    testset_path: str = field(default="../tt")
     load_from_cache_file: bool = field(default=False)
     num_proc: Optional[int] = field(default=None)
 
@@ -37,10 +37,14 @@ class Arguments(TrainingArguments):
     )
     weight_decay: float = field(
         default=0.19132033828553255,
+        # default=0.17537006645417813,
         metadata={"help": "Weight decay for AdamW if we apply some."},
     )
     num_train_epochs: float = field(
-        default=5.0, metadata={"help": "Total number of training epochs to perform."}
+        default=5.0,
+        metadata={"help": "Total number of training epochs to perform."}
+        # default=10.0,
+        # metadata={"help": "Total number of training epochs to perform."},
     )
     output_dir: str = field(
         default="output",
@@ -58,7 +62,10 @@ class Arguments(TrainingArguments):
         },
     )
     seed: int = field(
-        default=107, metadata={"help": "Random seed that will be set at the beginning of training."}
+        default=107,
+        metadata={"help": "Random seed that will be set at the beginning of training."}
+        # default=21,
+        # metadata={"help": "Random seed that will be set at the beginning of training."},
     )
     do_train: bool = field(default=True, metadata={"help": "Whether to run training."})
     do_eval: bool = field(default=True, metadata={"help": "Whether to run eval on the dev set."})
@@ -68,7 +75,6 @@ class Arguments(TrainingArguments):
         default="epoch",
         metadata={"help": "The evaluation strategy to use."},
     )
-
     logging_strategy: IntervalStrategy = field(
         default="epoch",
         metadata={"help": "The logging strategy to use."},
@@ -77,8 +83,12 @@ class Arguments(TrainingArguments):
         default="epoch",
         metadata={"help": "The checkpoint save strategy to use."},
     )
+    # logging_steps: int = field(default=34, metadata={"help": "Log every X updates steps."})
+    # save_steps: int = field(default=34, metadata={"help": "Save checkpoint every X updates steps."})
+    # eval_steps: int = field(default=34, metadata={"help": "Run an evaluation every X steps."})
+
     save_total_limit: Optional[int] = field(
-        default=1,
+        default=2,
         metadata={
             "help": (
                 "Limit the total amount of checkpoints."
@@ -129,7 +139,7 @@ class Arguments(TrainingArguments):
         metadata={"help": "Whether to run passage retrieval using sparse embedding."},
     )
     top_k_retrieval: int = field(
-        default=1,
+        default=20,
         metadata={"help": "Define how many top-k passages to retrieve based on similarity."},
     )
     use_faiss: bool = field(default=False, metadata={"help": "Whether to build with faiss"})
