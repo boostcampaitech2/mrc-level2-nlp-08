@@ -10,7 +10,7 @@ class SettingsArguments:
     pretrained_model_name_or_path: str = field(default="klue/roberta-large")
     trained_model_path: str = field(default="./outputs")
     trainset_path: str = field(default="../data/new_train_dataset")
-    testset_path: str = field(default="../data/test_dataset")
+    testset_path: str = field(default="../test_es_top_20")
     load_from_cache_file: bool = field(default=False)
     num_proc: Optional[int] = field(default=None)
 
@@ -27,19 +27,26 @@ class Arguments(TrainingArguments):
     )
     gradient_accumulation_steps: int = field(
         default=8,
-        metadata={"help": "Number of updates steps to accumulate before performing a backward/update pass."},
+        metadata={
+            "help": "Number of updates steps to accumulate before performing a backward/update pass."
+        },
     )
     learning_rate: float = field(
-        default=6.819759978366989e-06,
+        default=1.809598615643362e-05,
+        # default=6.819759978366989e-06,
         # default=3e-5,
         metadata={"help": "The initial learning rate for AdamW."},
     )
     weight_decay: float = field(
-        default=0.17537006645417813,
+        default=0.19132033828553255,
+        # default=0.17537006645417813,
         metadata={"help": "Weight decay for AdamW if we apply some."},
     )
     num_train_epochs: float = field(
-        default=10.0, metadata={"help": "Total number of training epochs to perform."}
+        default=5.0,
+        metadata={"help": "Total number of training epochs to perform."}
+        # default=10.0,
+        # metadata={"help": "Total number of training epochs to perform."},
     )
     output_dir: str = field(
         default="output",
@@ -57,11 +64,18 @@ class Arguments(TrainingArguments):
         },
     )
     seed: int = field(
-        default=21, metadata={"help": "Random seed that will be set at the beginning of training."}
+        default=107,
+        metadata={"help": "Random seed that will be set at the beginning of training."}
+        # default=21,
+        # metadata={"help": "Random seed that will be set at the beginning of training."},
     )
     do_train: bool = field(default=True, metadata={"help": "Whether to run training."})
-    do_eval: bool = field(default=True, metadata={"help": "Whether to run eval on the dev set."})
-    do_predict: bool = field(default=False, metadata={"help": "Whether to run predictions on the test set."})
+    do_eval: bool = field(
+        default=True, metadata={"help": "Whether to run eval on the dev set."}
+    )
+    do_predict: bool = field(
+        default=False, metadata={"help": "Whether to run predictions on the test set."}
+    )
 
     evaluation_strategy: IntervalStrategy = field(
         default="epoch",
@@ -77,7 +91,7 @@ class Arguments(TrainingArguments):
         metadata={"help": "The checkpoint save strategy to use."},
     )
     save_total_limit: Optional[int] = field(
-        default=1,
+        default=10,
         metadata={
             "help": (
                 "Limit the total amount of checkpoints."
@@ -90,11 +104,15 @@ class Arguments(TrainingArguments):
         default=True,
         metadata={"help": "Whether to use 16-bit (mixed) precision instead of 32-bit"},
     )
-    pad_to_multiple_of: int = field(default=8, metadata={"help": "Pad to multiple of set number"})
+    pad_to_multiple_of: int = field(
+        default=8, metadata={"help": "Pad to multiple of set number"}
+    )
 
     label_names: Optional[Tuple[str]] = field(
         default=("start_positions", "end_positions"),
-        metadata={"help": "The list of keys in your dictionary of inputs that correspond to the labels."},
+        metadata={
+            "help": "The list of keys in your dictionary of inputs that correspond to the labels."
+        },
     )
     load_best_model_at_end: Optional[bool] = field(
         default=True,
@@ -103,7 +121,8 @@ class Arguments(TrainingArguments):
         },
     )
     metric_for_best_model: Optional[str] = field(
-        default="f1", metadata={"help": "The metric to use to compare two different models."}
+        default="f1",
+        metadata={"help": "The metric to use to compare two different models."},
     )
 
     max_length: Optional[int] = field(default=384)
@@ -120,7 +139,9 @@ class Arguments(TrainingArguments):
     )
     resume_from_checkpoint: Optional[str] = field(
         default=None,
-        metadata={"help": "The path to a folder with a valid checkpoint for your model."},
+        metadata={
+            "help": "The path to a folder with a valid checkpoint for your model."
+        },
     )
     num_max_prediction: int = field(default=20)
     eval_retrieval: bool = field(
@@ -129,7 +150,13 @@ class Arguments(TrainingArguments):
     )
     top_k_retrieval: int = field(
         default=20,
-        metadata={"help": "Define how many top-k passages to retrieve based on similarity."},
+        metadata={
+            "help": "Define how many top-k passages to retrieve based on similarity."
+        },
     )
-    use_faiss: bool = field(default=False, metadata={"help": "Whether to build with faiss"})
-    num_clusters: int = field(default=5, metadata={"help": "Define how many clusters to use for faiss."})
+    use_faiss: bool = field(
+        default=False, metadata={"help": "Whether to build with faiss"}
+    )
+    num_clusters: int = field(
+        default=5, metadata={"help": "Define how many clusters to use for faiss."}
+    )

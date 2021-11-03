@@ -46,7 +46,7 @@ def preprocess_wiki(dataset):
     return new_wiki
 
 
-def create_processed_datasets(data_path="/opt/ml/data/"):
+def create_processed_datasets(data_path="../data/"):
     train_features = Features(
         {
             "answers": Sequence(
@@ -67,7 +67,7 @@ def create_processed_datasets(data_path="/opt/ml/data/"):
         wiki = json.load(f)
 
     new_wiki = preprocess_wiki(wiki)
-    with open("/opt/ml/data/preprocess_wiki.json", "w", encoding="utf-8") as make_file:
+    with open("../data/preprocess_wiki.json", "w", encoding="utf-8") as make_file:
         json.dump(new_wiki, make_file, indent="\t", ensure_ascii=False)
 
     train_dataset = load_from_disk(os.path.join(data_path, "train_dataset/train"))
@@ -77,10 +77,10 @@ def create_processed_datasets(data_path="/opt/ml/data/"):
     new_validation_data = pd.DataFrame(preprocess_dataset(validation_dataset))
 
     Dataset.from_pandas(new_train_data, features=train_features).save_to_disk(
-        "/opt/ml/data/new_train_dataset/train"
+        "../data/new_train_dataset/train"
     )
     Dataset.from_pandas(new_validation_data, features=train_features).save_to_disk(
-        "/opt/ml/data/new_train_dataset/validation"
+        "../data/new_train_dataset/validation"
     )
 
 

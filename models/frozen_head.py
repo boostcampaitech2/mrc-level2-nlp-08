@@ -28,7 +28,7 @@ from transformers import AutoModel
     """,
     ROBERTA_START_DOCSTRING,
 )
-class LSTMRobertaForQuestionAnswering(RobertaPreTrainedModel):
+class CustomModel(RobertaPreTrainedModel):
     _keys_to_ignore_on_load_unexpected = [r"pooler"]
     _keys_to_ignore_on_load_missing = [r"position_ids"]
 
@@ -41,45 +41,37 @@ class LSTMRobertaForQuestionAnswering(RobertaPreTrainedModel):
         ), "Base model does not match with any Roberta variants"
 
         self.roberta = AutoModel.from_pretrained(
-            pretrained_model_name_or_path, config=config, add_pooling_layer=False
+            "/home/develop/torch_versionup/checkpoint-666",
+            config=config,
+            add_pooling_layer=False,
         )
+
+        for p in self.roberta.parameters():
+            p.requires_grad = False
 
         self.hidden_dim = config.hidden_size
-
-        self.lstm = nn.LSTM(
-            input_size=self.hidden_dim * 3,
-            hidden_size=self.hidden_dim,
-            num_layers=2,
-            dropout=0.2,
-            batch_first=True,
-            bidirectional=True,
-        )
         self.qa_outputs = nn.Linear(
-            in_features=self.hidden_dim * 2, out_features=config.num_labels
+            in_features=self.hidden_dim, out_features=config.num_labels
         )
 
-        self.conv1d_k1 = nn.Conv1d(
-            in_channels=self.hidden_dim,
-            out_channels=self.hidden_dim,
-            kernel_size=1,
-            padding=0,
-        )
-        self.conv1d_k3 = nn.Conv1d(
-            in_channels=self.hidden_dim,
-            out_channels=self.hidden_dim,
-            kernel_size=3,
-            padding=1,
-        )
-        self.conv1d_k5 = nn.Conv1d(
-            in_channels=self.hidden_dim,
-            out_channels=self.hidden_dim,
-            kernel_size=5,
-            padding=2,
-        )
-        self.relu = nn.ReLU()
-        self.dropout = nn.Dropout(0.3)
+        # self.gru = nn.GRU(
+        #     input_size=self.hidden_dim,
+        #     hidden_size=self.hidden_dim,
+        #     num_layers=2,
+        #     dropout=0.5,
+        #     batch_first=True,
+        #     bidirectional=True,
+        # )
+        # self.lstm = nn.LSTM(
+        #     input_size=self.hidden_dim,
+        #     hidden_size=self.hidden_dim,
+        #     num_layers=2,
+        #     dropout=0.5,
+        #     batch_first=True,
+        #     bidirectional=True,
+        # )
         # self.qa_outputs = nn.Linear(
-        #     in_features=self.hidden_dim * 3, out_features=config.num_labels
+        #     in_features=self.hidden_dim * 2, out_features=config.num_labels
         # )
 
     @add_start_docstrings_to_model_forward(
@@ -131,29 +123,17 @@ class LSTMRobertaForQuestionAnswering(RobertaPreTrainedModel):
             return_dict=return_dict,
         )
 
-        # sequence_output = outputs[0]
-        # # print(f"{sequence_output.shape=}")
-
-        # lstm_output, (h, c) = self.lstm(sequence_output)
-
-        # logits = self.qa_outputs(lstm_output)
-        # print(f"{logits.shape=}")
-
-        sequence_output = outputs[0].permute(0, 2, 1)
+        sequence_output = outputs[0]
         # print(f"{sequence_output.shape=}")
 
-        cnn_k1_output = self.relu(self.conv1d_k1(sequence_output))
-        cnn_k3_output = self.relu(self.conv1d_k3(sequence_output))
-        cnn_k5_output = self.relu(self.conv1d_k5(sequence_output))
-        concat_cnn_output = torch.cat((cnn_k1_output, cnn_k3_output, cnn_k5_output), 1)
-        lstm_output, (h, c) = self.lstm(
-            self.dropout(concat_cnn_output.permute(0, 2, 1))
-        )
-        logits = self.qa_outputs(lstm_output)
+        logits = self.qa_outputs(sequence_output)
+        # print(f"{logits.shape=}")
 
-        # print(concat_cnn_output.shape)
+        # gru_output, n_h = self.gru(sequence_output)
+        # logits = self.qa_outputs(gru_output)
 
-        # logits = self.qa_outputs(self.dropout(concat_cnn_output.permute(0, 2, 1)))
+        # lstm_output, (c, h) = self.lstm(sequence_output)
+        # logits = self.qa_outputs(lstm_output)
 
         start_logits, end_logits = logits.split(1, dim=-1)
         start_logits = start_logits.squeeze(-1).contiguous()
