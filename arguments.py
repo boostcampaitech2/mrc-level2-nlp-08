@@ -1,92 +1,18 @@
-from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List, Optional
+import argparse
 
+def get_args_parser():
+    parser = argparse.ArgumentParser('Image Classification', add_help=False)
+    parser.add_argument('--seed', default=2021, type=int)
+    parser.add_argument('--num_neg', default=3, type=int)
+    parser.add_argument('--train_data', default='../data/train_dataset/train', type=str)
+    parser.add_argument('--val_data', default='../data/train_dataset/validation', type=str)
+    parser.add_argument('--lr', default=2e-5, type=float)
+    parser.add_argument('--train_bs', default=4, type=int)
+    parser.add_argument('--num_epochs', default=2, type=int)
+    parser.add_argument('--weight_decay', default=0.01, type=float)
+    parser.add_argument('--early_stop', default=0, type=int)
+    parser.add_argument('--adam_epsilon', default=1e-08, type=float)
+    parser.add_argument('--gradient_accumulation_steps', default=1, type=int)
+    parser.add_argument('--warmup_steps', default=0, type=int)
 
-@dataclass
-class ModelArguments:
-    """
-    Arguments pertaining to which model/config/tokenizer we are going to fine-tune from.
-    """
-
-    model_name_or_path: str = field(
-        default="klue/roberta-large",
-        metadata={
-            "help": "Path to pretrained model or model identifier from huggingface.co/models"
-        },
-    )
-    config_name: Optional[str] = field(
-        default=None,
-        metadata={
-            "help": "Pretrained config name or path if not the same as model_name"
-        },
-    )
-    tokenizer_name: Optional[str] = field(
-        default=None,
-        metadata={
-            "help": "Pretrained tokenizer name or path if not the same as model_name"
-        },
-    )
-
-
-@dataclass
-class DataTrainingArguments:
-    """
-    Arguments pertaining to what data we are going to input our model for training and eval.
-    """
-
-    dataset_name: Optional[str] = field(
-        default="../data/train_dataset",
-        metadata={"help": "The name of the dataset to use."},
-    )
-    overwrite_cache: bool = field(
-        default=False,
-        metadata={"help": "Overwrite the cached training and evaluation sets"},
-    )
-    preprocessing_num_workers: Optional[int] = field(
-        default=None,
-        metadata={"help": "The number of processes to use for the preprocessing."},
-    )
-    max_seq_length: int = field(
-        default=384,
-        metadata={
-            "help": "The maximum total input sequence length after tokenization. Sequences longer "
-            "than this will be truncated, sequences shorter will be padded."
-        },
-    )
-    pad_to_max_length: bool = field(
-        default=False,
-        metadata={
-            "help": "Whether to pad all samples to `max_seq_length`. "
-            "If False, will pad the samples dynamically when batching to the maximum length in the batch (which can "
-            "be faster on GPU but will be slower on TPU)."
-        },
-    )
-    doc_stride: int = field(
-        default=128,
-        metadata={
-            "help": "When splitting up a long document into chunks, how much stride to take between chunks."
-        },
-    )
-    max_answer_length: int = field(
-        default=30,
-        metadata={
-            "help": "The maximum length of an answer that can be generated. This is needed because the start "
-            "and end predictions are not conditioned on one another."
-        },
-    )
-    eval_retrieval: bool = field(
-        default=True,
-        metadata={"help": "Whether to run passage retrieval using sparse embedding."},
-    )
-    num_clusters: int = field(
-        default=64, metadata={"help": "Define how many clusters to use for faiss."}
-    )
-    top_k_retrieval: int = field(
-        default=1,
-        metadata={
-            "help": "Define how many top-k passages to retrieve based on similarity."
-        },
-    )
-    use_faiss: bool = field(
-        default=False, metadata={"help": "Whether to build with faiss"}
-    )
+    return parser

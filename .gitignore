@@ -1,0 +1,13 @@
+# Python
+__pycache__
+
+# wandb
+wandb/
+
+# jupyter temp files
+.ipynb_checkpoints
+
+# saved model & predictions
+dense_encoder/
+checkpoints/
+pickle/
