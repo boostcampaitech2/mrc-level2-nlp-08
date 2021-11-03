@@ -46,7 +46,7 @@ def main(args):
     wiki = [v['text'] for v in wiki.values()]
 
     # append negative passages
-    p_with_neg = append_neg_p(args.num_neg, corpus, train_data['context'], train_data['answers'])
+    p_with_neg = append_neg_p(args.num_neg, corpus, train_data['context'])
 
     # tokenize
     ## train_data
