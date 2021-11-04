@@ -9,9 +9,9 @@ from transformers.trainer_utils import IntervalStrategy
 @dataclass
 class SettingsArguments:
     pretrained_model_name_or_path: str = field(default="hyunwoongko/kobart")
-    trained_model_path: str = field(default="./output/checkpoint-9936")
-    trainset_path: str = field(default="../../data/train_dataset")
-    testset_path: str = field(default="../../data/test_dataset")
+    trained_model_path: str = field(default="./output/checkpoint-11910")
+    trainset_path: str = field(default="../../data/new_train_dataset")
+    testset_path: str = field(default="../../data/hb_k_v6")
     load_from_cache_file: bool = field(default=True)
     num_proc: Optional[int] = field(default=None)
  
@@ -54,7 +54,7 @@ class Seq2SeqArguments(Seq2SeqTrainingArguments):
         metadata={"help": "The evaluation strategy to use."},
     )
     #eval_steps: int = field(default=10, metadata={"help": "Log every X updates steps."})
-    logging_steps: int = field(default=500, metadata={"help": "logging steps"})
+    logging_steps: int = field(default=200, metadata={"help": "logging steps"})
     per_device_train_batch_size: int = field(
         default=16, metadata={"help": "Batch size per GPU/TPU core/CPU for training."}
     )
@@ -63,7 +63,7 @@ class Seq2SeqArguments(Seq2SeqTrainingArguments):
     )
 
     num_train_epochs: float = field(
-        default=10, metadata={"help": "Total number of training epochs to perform."}
+        default=5, metadata={"help": "Total number of training epochs to perform."}
     )
     save_strategy: IntervalStrategy = field(
         default="epoch",
@@ -83,9 +83,9 @@ class Seq2SeqArguments(Seq2SeqTrainingArguments):
         metadata={"help": "Whether to use 16-bit (mixed) precision instead of 32-bit"},
     )
     pad_to_multiple_of: int = field(default=8, metadata={"help": "Pad to multiple of set number"})
-    max_length: Optional[int] = field(default=128, metadata={"help": "sequence_length"})
+    max_length: Optional[int] = field(default=384, metadata={"help": "sequence_length"})
     stride: int = field(
-        default=64,
+        default=128,
         metadata={"help": "The stride to use when handling overflow."},
     )
     max_answer_length: int = field(
@@ -108,8 +108,5 @@ class Seq2SeqArguments(Seq2SeqTrainingArguments):
     num_beams: int = field(default=5, metadata={"help": "Number of beams when generating text"})
     predict_with_generate: bool = field(default=True)
     learning_rate: float = field(
-        default=0.5e-05, metadata={"help": "The initial learning rate for AdamW."}
+        default=1e-05, metadata={"help": "The initial learning rate for AdamW."}
     )
-    # weight_decay: float = field(
-    #     default=0.17537006645417813, metadata={"help": "Weight decay for AdamW if we apply some."}
-    # )

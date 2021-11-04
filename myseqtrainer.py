@@ -22,8 +22,8 @@ from torch.utils.data import Dataset, IterableDataset
 from transformers.deepspeed import deepspeed_init, is_deepspeed_zero3_enabled
 from transformers.trainer import Trainer
 from transformers.trainer_utils import (
-    PredictionOutput,
     denumpify_detensorize,
+    speed_metrics,
 )
 from transformers.utils import logging
 from torch.utils.data import DataLoader
@@ -38,6 +38,8 @@ from transformers.trainer_pt_utils import (
 
 import numpy as np
 import collections
+import math
+import time
 
 if version.parse(torch.__version__) >= version.parse("1.6"):
     from torch.cuda.amp import autocast
@@ -88,7 +90,7 @@ class MySeq2SeqTrainer(Trainer):
         self._num_beams = num_beams if num_beams is not None else self.args.generation_num_beams
         return super().evaluate(eval_dataset, ignore_keys=ignore_keys, metric_key_prefix=metric_key_prefix)
 
-
+    
     def predict(
         self,
         test_dataset: Dataset,
@@ -96,7 +98,7 @@ class MySeq2SeqTrainer(Trainer):
         metric_key_prefix: str = "eval",
         max_length: Optional[int] = None,
         num_beams: Optional[int] = None,
-    ) -> PredictionOutput:
+    ) -> Tuple[Optional[torch.Tensor], Optional[torch.Tensor]]:
         """
         Run prediction and returns predictions and potential metrics.
 
@@ -132,10 +134,67 @@ class MySeq2SeqTrainer(Trainer):
             - metrics (:obj:`Dict[str, float]`, `optional`): The potential dictionary of metrics (if the dataset
               contained labels).
         """
+        self.args.use_legacy_prediction_loop = False
         self._max_length = max_length if max_length is not None else self.args.generation_max_length
         self._num_beams = num_beams if num_beams is not None else self.args.generation_num_beams
-        return super().predict(test_dataset, ignore_keys=ignore_keys, metric_key_prefix=metric_key_prefix)
+        return self.mypredict(test_dataset, ignore_keys=ignore_keys, metric_key_prefix=metric_key_prefix)
 
+    def mypredict(
+        self, test_dataset: Dataset, ignore_keys: Optional[List[str]] = None, metric_key_prefix: str = "test"
+    ) -> Tuple[Optional[torch.Tensor], Optional[torch.Tensor]]:
+        """
+        Run prediction and returns predictions and potential metrics.
+
+        Depending on the dataset and your use case, your test dataset may contain labels. In that case, this method
+        will also return metrics, like in :obj:`evaluate()`.
+
+        Args:
+            test_dataset (:obj:`Dataset`):
+                Dataset to run the predictions on. If it is an :obj:`datasets.Dataset`, columns not accepted by the
+                ``model.forward()`` method are automatically removed. Has to implement the method :obj:`__len__`
+            ignore_keys (:obj:`Lst[str]`, `optional`):
+                A list of keys in the output of your model (if it is a dictionary) that should be ignored when
+                gathering predictions.
+            metric_key_prefix (:obj:`str`, `optional`, defaults to :obj:`"test"`):
+                An optional prefix to be used as the metrics key prefix. For example the metrics "bleu" will be named
+                "test_bleu" if the prefix is "test" (default)
+
+        .. note::
+
+            If your predictions or labels have different sequence length (for instance because you're doing dynamic
+            padding in a token classification task) the predictions will be padded (on the right) to allow for
+            concatenation into one array. The padding index is -100.
+
+        Returns: `NamedTuple` A namedtuple with the following keys:
+
+            - predictions (:obj:`np.ndarray`): The predictions on :obj:`test_dataset`.
+            - label_ids (:obj:`np.ndarray`, `optional`): The labels (if the dataset contained some).
+            - metrics (:obj:`Dict[str, float]`, `optional`): The potential dictionary of metrics (if the dataset
+              contained labels).
+        """
+        # memory metrics - must set up as early as possible
+        self._memory_tracker.start()
+
+        test_dataloader = self.get_test_dataloader(test_dataset)
+        start_time = time.time()
+
+        eval_loop = self.prediction_loop if self.args.use_legacy_prediction_loop else self.evaluation_loop
+        output = eval_loop(
+            test_dataloader, description="Prediction", ignore_keys=ignore_keys, metric_key_prefix=metric_key_prefix
+        )
+        total_batch_size = self.args.eval_batch_size * self.args.world_size
+        output.metrics.update(
+            speed_metrics(
+                metric_key_prefix,
+                start_time,
+                num_samples=output.num_samples,
+                num_steps=math.ceil(output.num_samples / total_batch_size),
+            )
+        )
+
+        self._memory_tracker.stop_and_update_metrics(output.metrics)
+
+        return PredictionOutput(predictions=output.predictions, scores=output.scores)
 
     def prediction_step(
         self,
@@ -188,7 +247,6 @@ class MySeq2SeqTrainer(Trainer):
             output_scores = True,
             **gen_kwargs,
         )
-        #print(generated_tokens)
         # in case the batch is shorter than max length, the output should be padded
         if generated_tokens.sequences.shape[-1] < gen_kwargs["max_length"]:
             generated_tokens.sequences = self._pad_tensors_to_max_len(generated_tokens.sequences, gen_kwargs["max_length"])
@@ -210,10 +268,12 @@ class MySeq2SeqTrainer(Trainer):
         if self.args.prediction_loss_only:
             return (loss, None, None)
 
-        labels = inputs["labels"]
-        if labels.shape[-1] < gen_kwargs["max_length"]:
-            labels = self._pad_tensors_to_max_len(labels, gen_kwargs["max_length"])
-
+        if has_labels:
+            labels = inputs["labels"]
+            if labels.shape[-1] < gen_kwargs["max_length"]:
+                labels = self._pad_tensors_to_max_len(labels, gen_kwargs["max_length"])
+        else:
+            labels = None
         return (loss, generated_tokens.sequences, labels, generated_tokens.sequences_scores)
 
     def _pad_tensors_to_max_len(self, tensor, max_length):
@@ -316,7 +376,7 @@ class MySeq2SeqTrainer(Trainer):
 
                 # Prediction step
                 loss, logits, labels, scores = self.prediction_step(model, inputs, prediction_loss_only, ignore_keys=ignore_keys)
-                #print(f"scores after prediction step: {scores}")
+
                 # Update containers on host
                 if loss is not None:
                     losses = self._nested_gather(loss.repeat(batch_size))
@@ -418,7 +478,7 @@ class MySeq2SeqTrainer(Trainer):
                     metrics[f"{metric_key_prefix}_{key}"] = metrics.pop(key)
 
             return EvalLoopOutput(predictions=all_preds, label_ids=all_labels, metrics=metrics, num_samples=num_samples, scores=all_scores)
-
+    
 class EvalPrediction(NamedTuple):
     """
     Evaluation output (always contains labels), to be used to compute metrics.
@@ -438,4 +498,8 @@ class EvalLoopOutput(NamedTuple):
     label_ids: Optional[np.ndarray]
     metrics: Optional[Dict[str, float]]
     num_samples: Optional[int]
+    scores : Optional[List[float]]
+
+class PredictionOutput(NamedTuple):
+    predictions: Union[np.ndarray, Tuple[np.ndarray]]
     scores : Optional[List[float]]

@@ -14,7 +14,7 @@ from myseqtrainer import MySeq2SeqTrainer
 from arguments import SettingsArguments, Seq2SeqArguments
 from process import preprocess_testset_g
 
-from metric import postprocess_g
+from metric import postprocess_g_test
 from utils import send_along
 from retrieval import SparseRetrieval
 
@@ -29,19 +29,19 @@ def inference(settings, args):
     args.dataset = load_from_disk(settings.testset_path)
 
     ##
-    retriever = SparseRetrieval(
-        tokenize_fn=args.tokenizer, data_path="../../data", context_path="wikipedia_documents.json"
-    )
-    retriever.get_sparse_embedding()
-    df = retriever.retrieve(args.dataset["validation"], topk=args.top_k_retrieval)
-    f = Features(
-        {
-            "context": Value(dtype="string", id=None),
-            "id": Value(dtype="string", id=None),
-            "question": Value(dtype="string", id=None),
-        }
-    )
-    args.dataset = DatasetDict({"validation": Dataset.from_pandas(df, features=f)})
+    # retriever = SparseRetrieval(
+    #     tokenize_fn=args.tokenizer, data_path="../../data", context_path="preprocess_wiki.json"
+    # )
+    # retriever.get_sparse_embedding()
+    # df = retriever.retrieve(args.dataset["validation"], topk=args.top_k_retrieval)
+    # f = Features(
+    #     {
+    #         "context": Value(dtype="string", id=None),
+    #         "id": Value(dtype="string", id=None),
+    #         "question": Value(dtype="string", id=None),
+    #     }
+    # )
+    # args.dataset = DatasetDict({"validation": Dataset.from_pandas(df, features=f)})
     ##
 
     eval_dataset = args.dataset["validation"]
@@ -61,7 +61,7 @@ def inference(settings, args):
         tokenizer=args.tokenizer,
         data_collator=data_collator,
     )
-    postprocess_g(args, trainer.predict(test_dataset=eval_dataset))
+    postprocess_g_test(args, trainer.predict(test_dataset=eval_dataset, ignore_keys=["labels"]))
 
 
 if __name__ == "__main__":
