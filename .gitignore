@@ -7,6 +7,8 @@
 /retrieval/q_encoder_best
 /retrieval/q_encoder_rec1
 /retrieval/p_encoder_rec1
+/retrieval/p_encoder_title_best
+/retrieval/q_encoder_title_best
 
 nohup.out
 # Python

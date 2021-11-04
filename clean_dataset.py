@@ -55,21 +55,21 @@ def preprocess_wiki(dataset):
 
 
 def create_processed_datasets(data_path="/opt/ml/data/"):
-    train_features = Features(
-        {
-            "answers": Sequence(
-                feature={
-                    "text": Value(dtype="string", id=None),
-                    "answer_start": Value(dtype="int32", id=None),
-                },
-                length=-1,
-                id=None,
-            ),
-            "context": Value(dtype="string", id=None),
-            "id": Value(dtype="string", id=None),
-            "question": Value(dtype="string", id=None),
-        }
-    )
+    # train_features = Features(
+    #     {
+    #         "answers": Sequence(
+    #             feature={
+    #                 "text": Value(dtype="string", id=None),
+    #                 "answer_start": Value(dtype="int32", id=None),
+    #             },
+    #             length=-1,
+    #             id=None,
+    #         ),
+    #         "context": Value(dtype="string", id=None),
+    #         "id": Value(dtype="string", id=None),
+    #         "question": Value(dtype="string", id=None),
+    #     }
+    # )
 
     with open(
         os.path.join(data_path, "wikipedia_documents.json"), "r", encoding="utf-8"
@@ -84,6 +84,7 @@ def create_processed_datasets(data_path="/opt/ml/data/"):
     validation_dataset = load_from_disk(
         os.path.join(data_path, "train_dataset/validation")
     )
+    train_features = train_dataset.features
 
     new_train_data = pd.DataFrame(preprocess_dataset(train_dataset))
     new_validation_data = pd.DataFrame(preprocess_dataset(validation_dataset))

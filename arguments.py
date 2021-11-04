@@ -7,12 +7,14 @@ from transformers.trainer_utils import IntervalStrategy
 
 @dataclass
 class SettingsArguments:
-    pretrained_model_name_or_path: str = field(default="klue/roberta-large")
+    pretrained_model_name_or_path: str = field(default="monologg/kobigbird-bert-base")
     trained_model_path: str = field(default="./output")
     trainset_path: str = field(default="/opt/ml/data/train_dataset")
     testset_path: str = field(default="../data/test_dataset")
     load_from_cache_file: bool = field(default=False)
     num_proc: Optional[int] = field(default=None)
+    # "monologg/kobigbird-bert-base"
+    # "klue/roberta-large"
 
 
 @dataclass
@@ -46,21 +48,18 @@ class Arguments(TrainingArguments):
         metadata={"help": "Random seed that will be set at the beginning of training."},
     )
     per_device_train_batch_size: int = field(
-        default=16, metadata={"help": "Batch size per GPU/TPU core/CPU for training."}
+        default=8, metadata={"help": "Batch size per GPU/TPU core/CPU for training."}
     )
     per_device_eval_batch_size: int = field(
-        default=16, metadata={"help": "Batch size per GPU/TPU core/CPU for evaluation."}
+        default=8, metadata={"help": "Batch size per GPU/TPU core/CPU for evaluation."}
     )
     learning_rate: float = field(
-        default=1.809598615643362e-05,
+        default=5e-05,
         metadata={"help": "The initial learning rate for AdamW."},
     )
     weight_decay: float = field(
-        default=0.19132033828553255,
+        default=0.01,
         metadata={"help": "Weight decay for AdamW if we apply some."},
-    )
-    num_train_epochs: float = field(
-        default=3, metadata={"help": "Total number of training epochs to perform."}
     )
     gradient_accumulation_steps: int = field(
         default=8,
@@ -68,16 +67,19 @@ class Arguments(TrainingArguments):
             "help": "Number of updates steps to accumulate before performing a backward/update pass."
         },
     )
+    num_train_epochs: float = field(
+        default=2, metadata={"help": "Total number of training epochs to perform."}
+    )
 
     save_strategy: IntervalStrategy = field(
         default="steps",
         metadata={"help": "The checkpoint save strategy to use."},
     )
     eval_steps: int = field(
-        default=25, metadata={"help": "Run an evaluation every X steps."}
+        default=100, metadata={"help": "Run an evaluation every X steps."}
     )
     save_steps: int = field(
-        default=25, metadata={"help": "Save checkpoint every X updates steps."}
+        default=100, metadata={"help": "Save checkpoint every X updates steps."}
     )
 
     save_total_limit: Optional[int] = field(
@@ -111,13 +113,13 @@ class Arguments(TrainingArguments):
         },
     )
     metric_for_best_model: Optional[str] = field(
-        default="f1",
+        default=None,
         metadata={"help": "The metric to use to compare two different models."},
     )
-
-    max_length: Optional[int] = field(default=384)
+    # 384, 128 -> 100, 50
+    max_length: Optional[int] = field(default=1024)
     stride: int = field(
-        default=128,
+        default=512,
         metadata={"help": "The stride to use when handling overflow."},
     )
     max_answer_length: int = field(

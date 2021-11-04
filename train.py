@@ -14,10 +14,10 @@ from transformers import (
 import wandb
 
 from arguments import SettingsArguments, Arguments
-from process import preprocess
+from process import preprocess, preprocess_temp
 from metric import compute_metrics
 from utils import send_along
-from models.lstm_roberta import LSTMRobertaForQuestionAnswering
+from models.cnn_model import RobertModelForQuestionAnsweringConv
 
 
 def train(settings, args):
@@ -28,7 +28,11 @@ def train(settings, args):
     model = AutoModelForQuestionAnswering.from_pretrained(
         settings.pretrained_model_name_or_path, config=args.config
     )
-    # model = LSTMRobertaForQuestionAnswering(settings.pretrained_model_name_or_path, config=args.config)
+
+    # args.config.sep_token_id = args.tokenizer.sep_token_id
+    # model = RobertModelForQuestionAnsweringConv.from_pretrained(
+    #     settings.pretrained_model_name_or_path, config=args.config
+    # )
 
     data_collator = DataCollatorWithPadding(
         tokenizer=args.tokenizer,
@@ -36,7 +40,8 @@ def train(settings, args):
     )
     args.dataset = load_from_disk(settings.trainset_path)
 
-    train_dataset = args.dataset["hybrid_5_train"]
+    train_dataset = args.dataset["suffle_concat"]
+    # "suffle_concat"
     column_names = train_dataset.column_names
     train_dataset = train_dataset.map(
         send_along(preprocess, sent_along=args),
@@ -47,6 +52,7 @@ def train(settings, args):
     )
 
     eval_dataset = args.dataset["validation"]
+    # eval_dataset = load_from_disk("/opt/ml/data/train_dataset/validation")
     eval_dataset = eval_dataset.map(
         send_along(preprocess, sent_along=args),
         batched=True,
@@ -55,6 +61,11 @@ def train(settings, args):
         load_from_cache_file=settings.load_from_cache_file,
     )
     args.processed_eval_dataset = eval_dataset
+    # print(len(train_dataset["input_ids"][0]))
+    # print(len(train_dataset["attention_mask"][0]))
+    # print(len(train_dataset["token_type_ids"][0]))
+    # print(train_dataset["end_positions"][0])
+    # print(train_dataset["start_positions"][0])
 
     trainer = Trainer(
         model=model,
