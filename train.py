@@ -82,7 +82,7 @@ def train_e(settings, args):
     # )
     args.dataset = load_from_disk(settings.trainset_path)
     
-    #train_dataset = args.dataset["train"]
+    train_dataset = args.dataset["train"]
     column_names = train_dataset.column_names
     train_dataset = train_dataset.map(
         send_along(preprocess_e, sent_along=args),
