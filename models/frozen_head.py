@@ -28,7 +28,7 @@ from transformers import AutoModel
     """,
     ROBERTA_START_DOCSTRING,
 )
-class CustomModel(RobertaPreTrainedModel):
+class FrozenHeadModel(RobertaPreTrainedModel):
     _keys_to_ignore_on_load_unexpected = [r"pooler"]
     _keys_to_ignore_on_load_missing = [r"position_ids"]
 
@@ -44,8 +44,8 @@ class CustomModel(RobertaPreTrainedModel):
             add_pooling_layer=False,
         )
 
-        # for p in self.roberta.parameters():
-        #     p.requires_grad = False
+        for p in self.roberta.parameters():
+            p.requires_grad = False
 
         self.hidden_dim = config.hidden_size
         self.qa_outputs = nn.Linear(in_features=self.hidden_dim, out_features=config.num_labels)

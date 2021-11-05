@@ -1,12 +1,8 @@
 import json
 
-with open(
-    "/opt/ml/develop/ttttt/passage_random_shuffle_hb_v5/nbest_predictions.json", encoding="utf-8"
-) as json_file:
+with open("/opt/ml/develop/outputs/nbest_predictions.json", encoding="utf-8") as json_file:
     json_data = json.load(json_file)
-with open(
-    "/opt/ml/develop/ttttt/passage_random_shuffle_hb_v5/predictions.json", encoding="utf-8"
-) as json_file:
+with open("/opt/ml/develop/outputs/predictions.json", encoding="utf-8") as json_file:
     raw_answer = json.load(json_file)
 
 mrc_id = list(json_data.keys())
@@ -30,7 +26,7 @@ for i in range(len(mrc_id)):
         print(mrc_id[i], ": ", raw_answer[mrc_id[i]], " -> ", last_answer[mrc_id[i]])
 
 with open(
-    "/opt/ml/develop/ttttt/passage_random_shuffle_hb_v5/proprecessing_predictions.json",
+    "/opt/ml/develop/outputs/preprocessing_predictions.json",
     "w",
     encoding="utf-8",
 ) as make_file:

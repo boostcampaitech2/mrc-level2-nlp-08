@@ -31,20 +31,14 @@ class Arguments(TrainingArguments):
     )
     learning_rate: float = field(
         default=1.809598615643362e-05,
-        # default=6.819759978366989e-06,
-        # default=3e-5,
         metadata={"help": "The initial learning rate for AdamW."},
     )
     weight_decay: float = field(
         default=0.19132033828553255,
-        # default=0.17537006645417813,
         metadata={"help": "Weight decay for AdamW if we apply some."},
     )
     num_train_epochs: float = field(
-        default=5.0,
-        metadata={"help": "Total number of training epochs to perform."}
-        # default=10.0,
-        # metadata={"help": "Total number of training epochs to perform."},
+        default=5.0, metadata={"help": "Total number of training epochs to perform."}
     )
     output_dir: str = field(
         default="output",
@@ -62,10 +56,7 @@ class Arguments(TrainingArguments):
         },
     )
     seed: int = field(
-        default=107,
-        metadata={"help": "Random seed that will be set at the beginning of training."}
-        # default=21,
-        # metadata={"help": "Random seed that will be set at the beginning of training."},
+        default=107, metadata={"help": "Random seed that will be set at the beginning of training."}
     )
     do_train: bool = field(default=True, metadata={"help": "Whether to run training."})
     do_eval: bool = field(default=True, metadata={"help": "Whether to run eval on the dev set."})
@@ -83,9 +74,6 @@ class Arguments(TrainingArguments):
         default="epoch",
         metadata={"help": "The checkpoint save strategy to use."},
     )
-    # logging_steps: int = field(default=34, metadata={"help": "Log every X updates steps."})
-    # save_steps: int = field(default=34, metadata={"help": "Save checkpoint every X updates steps."})
-    # eval_steps: int = field(default=34, metadata={"help": "Run an evaluation every X steps."})
 
     save_total_limit: Optional[int] = field(
         default=2,

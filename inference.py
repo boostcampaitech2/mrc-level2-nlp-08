@@ -28,7 +28,6 @@ def inference(settings, args):
     )
     args.dataset = load_from_disk(settings.testset_path)
 
-    ##
     retriever = SparseRetrieval(
         tokenize_fn=args.tokenizer, data_path="../data", context_path="preprocess_wiki.json"
     )

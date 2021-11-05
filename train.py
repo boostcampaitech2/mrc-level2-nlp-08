@@ -19,7 +19,7 @@ from metric import compute_metrics
 from utils import send_along
 from models.lstm_roberta import LSTMRobertaForQuestionAnswering
 from models.cnn_head import Conv1DRobertaForQuestionAnswering
-from models.frozen_head import CustomModel
+from models.frozen_head import FrozenHeadModel
 
 
 def train(settings, args):
@@ -28,27 +28,12 @@ def train(settings, args):
     model = AutoModelForQuestionAnswering.from_pretrained(
         settings.pretrained_model_name_or_path, config=args.config
     )
-    # model = Conv1DRobertaForQuestionAnswering(settings.pretrained_model_name_or_path, config=args.config)
-    # model = LSTMRobertaForQuestionAnswering(settings.pretrained_model_name_or_path, config=args.config)
-    # model = CustomModel(settings.pretrained_model_name_or_path, config=args.config)
-    # print(model)
 
     data_collator = DataCollatorWithPadding(
         tokenizer=args.tokenizer, pad_to_multiple_of=args.pad_to_multiple_of if args.fp16 else None
     )
     args.dataset = load_from_disk(settings.trainset_path)
-    # train_dataset = args.dataset["train"]
-
-    train_dataset = load_from_disk(
-        # "../sentence_shuffle"
-        "../train_with_origin_gt_add_top_k_passage/not_include_answer_passage_train_es_top_4"
-        # "../passage_shuffle/concat_train_gt_1"
-        # "../passage_random_shuffle",
-        # "../train_no_train_wiki_passage_top_5_include_answer"
-        # "../hb_train_no_train_passage_k_5"
-        # "../not_include_answer_passage_train_es_top_8"
-        # "../qg_title_concat_4"
-    )
+    train_dataset = args.dataset["train"]
 
     column_names = train_dataset.column_names
     train_dataset = train_dataset.map(
