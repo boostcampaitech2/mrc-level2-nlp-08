@@ -49,6 +49,12 @@ class Retrieval:
 
         self.wiki_corpus = list(self.wiki_context_id_dict.keys())
 
+    def get_topk_doc_id_and_score(self, query, top_k):
+        pass
+
+    def get_topk_doc_id_and_score_for_querys(self, querys, top_k):
+        pass
+
 
 class SparseRetrieval(Retrieval):
     def __init__(
@@ -180,14 +186,17 @@ class DenseRetrieval(Retrieval):
     ):
         super().__init__(tokenizer, data_path=data_path, context_path=context_path)
 
-        q_encoder = BertEncoder.from_pretrained("q_encoder_path")
-        p_encoder = BertEncoder.from_pretrained("p_encoder_path")
+        self.q_encoder = BertEncoder.from_pretrained(q_encoder_path)
+        self.p_encoder = BertEncoder.from_pretrained(p_encoder_path)
+        if torch.cuda.is_available():
+            self.p_encoder.cuda()
+            self.q_encoder.cuda()
 
         if os.path.isfile("dense_embedding.bin"):
             with open("dense_embedding.bin", "rb") as f:
                 self.p_embs = pickle.load(f)
         else:
-            self.p_embs = self.get_wiki_dense_embedding(p_encoder)
+            self.p_embs = self.get_wiki_dense_embedding(self.p_encoder)
             with open("dense_embedding.bin", "wb") as f:
                 pickle.dump(self.p_embs, f)
 
@@ -198,9 +207,6 @@ class DenseRetrieval(Retrieval):
             wiki_title_corpus.append(
                 self.wiki_id_title_dict[self.wiki_context_id_dict[self.wiki_corpus[i]]]
             )
-
-        if torch.cuda.is_available():
-            p_encoder.cuda()
 
         p_seqs = self.tokenizer(
             wiki_title_corpus,
@@ -235,6 +241,86 @@ class DenseRetrieval(Retrieval):
         p_embs = np.array(p_embs)
 
         return p_embs
+
+    def get_topk_doc_id_and_score(self, query, top_k):
+        with torch.no_grad():
+            self.q_encoder.eval()
+
+            q_seqs_val = self.tokenizer(
+                [query], padding="max_length", truncation=True, return_tensors="pt"
+            ).to("cuda")
+            q_emb = self.q_encoder(**q_seqs_val).to("cpu")  # (num_query, emb_dim)
+
+            p_embs = torch.Tensor(self.p_embs).squeeze()  # (num_passage, emb_dim)
+            dot_prod_scores = torch.matmul(q_emb, torch.transpose(p_embs, 0, 1))
+
+            rank = (
+                torch.argsort(dot_prod_scores, dim=1, descending=True)
+                .squeeze()
+                .to("cpu")
+                .numpy()
+                .tolist()
+            )
+            scores = []
+            for r in rank[:top_k]:
+                scores.append(dot_prod_scores[0][r].item())
+
+        return rank[:top_k], scores
+
+    def get_topk_doc_id_and_score_for_querys(self, querys, top_k):
+        q_seqs = self.tokenizer(
+            querys,
+            max_length=64,
+            padding="max_length",
+            truncation=True,
+            return_tensors="pt",
+        )
+        dataset = TensorDataset(
+            q_seqs["input_ids"], q_seqs["attention_mask"], q_seqs["token_type_ids"]
+        )
+        query_sampler = SequentialSampler(dataset)
+        query_dataloader = DataLoader(dataset, sampler=query_sampler, batch_size=32)
+        q_embs = []
+        with torch.no_grad():
+
+            epoch_iterator = tqdm(
+                query_dataloader, desc="Iteration", position=0, leave=True
+            )
+            self.q_encoder.eval()
+
+            for _, batch in enumerate(epoch_iterator):
+                batch = tuple(t.cuda() for t in batch)
+
+                q_inputs = {
+                    "input_ids": batch[0],
+                    "attention_mask": batch[1],
+                    "token_type_ids": batch[2],
+                }
+
+                outputs = self.q_encoder(**q_inputs).to("cpu").numpy()
+                q_embs.extend(outputs)
+        q_embs = np.array(q_embs)
+        if torch.cuda.is_available():
+            p_embs_cuda = torch.Tensor(self.p_embs).to("cuda")
+            q_embs_cuda = torch.Tensor(q_embs).to("cuda")
+        dot_prod_scores = torch.matmul(q_embs_cuda, torch.transpose(p_embs_cuda, 0, 1))
+        rank = torch.argsort(dot_prod_scores, dim=1, descending=True).squeeze()
+
+        query_ids = {}
+        query_scores = {}
+        idx = 0
+        for i in tqdm(range(len(querys))):
+            p_list = []
+            scores = []
+            q = querys[i]
+            for j in range(top_k):
+                p_list.append(self.wiki_context_id_dict[self.wiki_corpus[rank[idx][j]]])
+                scores.append(dot_prod_scores[idx][rank[idx][j]].item())
+            query_ids[q] = p_list
+            query_scores[q] = scores
+            idx += 1
+
+        return query_ids, query_scores
 
     def to_cuda(batch):
         return tuple(t.cuda() for t in batch)
