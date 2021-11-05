@@ -66,3 +66,5 @@ def create_processed_datasets(data_path='/opt/ml/data/'):
 
     Dataset.from_pandas(new_train_data, features=train_features).save_to_disk('/opt/ml/data/new_train_dataset/train')
     Dataset.from_pandas(new_validation_data, features=train_features).save_to_disk('/opt/ml/data/new_train_dataset/validation')
+
+create_processed_datasets()
