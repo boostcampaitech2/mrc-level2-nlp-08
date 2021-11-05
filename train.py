@@ -5,9 +5,9 @@ import torch.nn.functional as F
 
 from tqdm import trange, tqdm
 
+import pickle
 
-
-def train(args, train_dataset,  val_q_seqs, val_p_seqs, validation_document_id, p_model, q_model):
+def train(args, train_dataset,  val_q_seqs, val_p_seqs, validation_document, test_q_seqs, wiki, p_model, q_model):
     
     # logging
     best_acc = 0
@@ -82,7 +82,7 @@ def train(args, train_dataset,  val_q_seqs, val_p_seqs, validation_document_id, 
             train_loss_list.append(train_loss.detach().cpu().numpy())
 
             # print loss every 1000 steps
-            if step % 100 == 0 and step > 99:
+            if step % 500 == 0 and step > 99:
                 epoch_average_loss = sum(train_loss_list[step-100:step]) / 99
                 print(f'step: {step} with loss: {epoch_average_loss}')
 
@@ -116,19 +116,32 @@ def train(args, train_dataset,  val_q_seqs, val_p_seqs, validation_document_id, 
         dot_prod_scores = torch.matmul(q_emb, torch.transpose(p_embs, 0, 1))
         rank = torch.argsort(dot_prod_scores, dim=1, descending=True).squeeze()
 
+        print("**********Inference**********")        
+        with torch.no_grad():            
+            test_q_emb = q_model(**test_q_seqs).to('cpu')  #(num_query, emb_dim)
+            test_dot_prod_scores = torch.matmul(test_q_emb, torch.transpose(p_embs, 0, 1))
 
+        # print accuracy
         counter = 0
         for i in range(len(rank)):
-            if validation_document_id[i] == rank[i][0]:
+            if validation_document[i] == wiki[rank[i][0]]:
                 counter += 1
-        
+
         acc  = counter / len(rank)
 
         if acc > best_acc:
             stop_counter = 0
             best_acc = acc
+        
             torch.save(p_model, f'checkpoints/val_acc{acc:4.2%}_p_encoder.pt')
             torch.save(q_model, f'checkpoints/val_acc{acc:4.2%}_q_encoder.pt')
+
+            with open(f"scores/val_retreival_scores_{acc:4.2%}", "wb") as file:
+                pickle.dump(dot_prod_scores, file)
+
+            with open(f"scores/test_retreival_scores_{acc:4.2%}", "wb") as file:
+                pickle.dump(test_dot_prod_scores, file)
+                
         else:
             stop_counter += 1
             print(f"early stop count {stop_counter} out of {args.early_stop}")

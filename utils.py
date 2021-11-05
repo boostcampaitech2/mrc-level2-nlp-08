@@ -4,6 +4,7 @@ import random
 import os
 
 import argparse
+import pickle
 
 # for reproducibility
 def seed_everything(seed: int = 2021):
@@ -18,20 +19,27 @@ def seed_everything(seed: int = 2021):
         torch.backends.cudnn.deterministic = True  # type: ignore
         torch.backends.cudnn.benchmark = True
 
-def append_neg_p(num_neg: int, corpus: list, train_context: list):
-    corpus = np.array(corpus)
+def append_neg_p(num_neg: int, wiki: list, train_context: list, answer: list):
+    with open("pickle/elastic_train_neg", "rb") as file:
+        elastic_train_neg = pickle.load(file)
+
     p_with_neg = []
     
-    for c in train_context:
+    for idx, c in enumerate(train_context):
+        ans_text = answer[idx]['text'][0]
+        neg_idx = 0
+        counter = 0
+        p_with_neg.append(c)
+
         while True:
-            neg_idxs = np.random.randint(len(corpus), size=num_neg)
-
-            if not c in corpus[neg_idxs]:
-                p_neg = corpus[neg_idxs]
-
-                p_with_neg.append(c)
-                p_with_neg.extend(p_neg)
+            if ans_text not in wiki[elastic_train_neg[idx][neg_idx]]:
+                counter += 1
+                p_with_neg.append(wiki[elastic_train_neg[idx][neg_idx]])
+            
+            if counter == num_neg:
                 break
+            
+            neg_idx += 1
     
     return p_with_neg
 

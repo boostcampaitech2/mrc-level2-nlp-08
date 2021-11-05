@@ -33,6 +33,7 @@ def main(args):
     # loading train and validation data
     train_data = load_from_disk(args.train_data)
     validation_data = load_from_disk(args.val_data)
+    test_data = load_from_disk(args.val_data)
     
     # test
     #import numpy as np
@@ -42,11 +43,11 @@ def main(args):
     # load wiki data and remove duplicates
     with open('../data/wikipedia_documents.json', "r", encoding="utf-8") as f:
         wiki = json.load(f)
-    corpus = list(dict.fromkeys([v["text"] for v in wiki.values()]))
+    #corpus = list(dict.fromkeys([v["text"] for v in wiki.values()]))
     wiki = [v['text'] for v in wiki.values()]
 
     # append negative passages
-    p_with_neg = append_neg_p(args.num_neg, corpus, train_data['context'])
+    p_with_neg = append_neg_p(args.num_neg, wiki, train_data['context'], train_data['answers'])
 
     # tokenize
     ## train_data
@@ -55,6 +56,7 @@ def main(args):
     train_p_seqs = tokenizer(p_with_neg, padding="max_length", truncation=True, return_tensors='pt')
     ## validation_data
     val_q_seqs = tokenizer(validation_data['question'], padding="max_length", truncation=True, return_tensors='pt').to('cuda')
+    test_q_seqs = tokenizer(test_data['question'], padding="max_length", truncation=True, return_tensors='pt').to('cuda') 
     if os.path.isfile('pickle/wiki_token'):
         with open("pickle/wiki_token", "rb") as file:
             val_p_seqs = pickle.load(file)
@@ -81,7 +83,7 @@ def main(args):
     p_encoder.load_state_dict(model_dict['p_encoder'])
     q_encoder.load_state_dict(model_dict['q_encoder'])
 
-    train(args, train_dataset, val_q_seqs, val_p_seqs, validation_data['document_id'], p_encoder, q_encoder)
+    train(args, train_dataset, val_q_seqs, val_p_seqs, validation_data['context'], test_q_seqs, wiki, p_encoder, q_encoder)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Dense Embedding', parents=[get_args_parser()])
