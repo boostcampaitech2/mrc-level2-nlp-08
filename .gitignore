@@ -1,21 +1,10 @@
 /__pycache__
 /wandb
 /output
-/retrieval/p_encoder
-/retrieval/p_encoder_best
-/retrieval/q_encoder
-/retrieval/q_encoder_best
-/retrieval/q_encoder_rec1
-/retrieval/p_encoder_rec1
-/retrieval/p_encoder_title_best
-/retrieval/q_encoder_title_best
-/retrieval/dense_embedding.bin
-/retrieval/BM25Okapi.bin
-/retrieval/id_title_pair.bin
-/retrieval/wiki_context_id_pair.bin
-/retrieval/wiki_id_context_pair.bin
-/retrieval/es_q_scores.bin
-/retrieval/es_q_ids.bin
+/Retrieval/p_encoder/
+/Retrieval/q_encoder/
+/Retrieval/caching/
+
 
 nohup.out
 # Python
