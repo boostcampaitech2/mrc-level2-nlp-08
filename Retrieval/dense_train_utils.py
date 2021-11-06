@@ -4,13 +4,7 @@ import datasets
 import numpy as np
 import torch
 from datasets import load_from_disk
-from torch.utils.data import (
-    Dataset,
-    DataLoader,
-    RandomSampler,
-    TensorDataset,
-    SequentialSampler,
-)
+from torch.utils.data import Dataset
 from tqdm import tqdm
 import pandas as pd
 import pickle
@@ -85,22 +79,19 @@ class InBatchNegativeRandomDatasetNoTitle(Dataset):
         num_neg,
         tokenizer,
     ):
-        # 전처리된 위키
-        # wiki_dataset = pd.read_json(
-        #     "/opt/ml/data/preprocess_wiki.json", orient="index"
-        # )
-        # 중복 제거
-        # wiki_dataset = wiki_dataset.drop_duplicates(
-        #     ["text", "title"], ignore_index=True
-        # )
+        data_path = "/opt/ml/mrc-level2-nlp-08/Retrieval/"
+        caching_path = "caching/"
+        caching_context_id_path = data_path + caching_path + "wiki_context_id_pair.bin"
+        caching_id_context_path = data_path + caching_path + "wiki_id_context_pair.bin"
+        caching_id_title_path = data_path + caching_path + "id_title_pair.bin"
 
         # doc_id - context dict
-        with open("/opt/ml/data/wiki_id_context_pair.bin", "rb") as f:
+        with open(caching_id_context_path, "rb") as f:
             wiki_id_context = pickle.load(f)
-        with open("/opt/ml/data/wiki_id_title_pair.bin", "rb") as f:
+        with open(caching_id_title_path, "rb") as f:
             wiki_id_title = pickle.load(f)
         # context - doc_id
-        with open("/opt/ml/data/wiki_context_id_pair.bin", "rb") as f:
+        with open(caching_context_id_path, "rb") as f:
             wiki_context_id = pickle.load(f)
 
         # question - doc_id_list
