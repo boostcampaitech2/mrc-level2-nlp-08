@@ -363,14 +363,6 @@ class HybridRetrieval(Retrieval):
             caching_path=caching_path,
             context_path=context_path,
         )
-        # # 테스트
-        # with open(data_path + caching_path + "es_q_ids.bin", "rb") as f:
-        #     self.es_ids = pickle.load(f)
-        # with open(data_path + caching_path + "es_q_scores.bin", "rb") as f:
-        #     self.es_score = pickle.load(f)
-        # # 테스트
-        # self.es_id = [43280, 47081, 35064, 24024, 42242]
-        # self.es_score = [20.487246, 20.10372, 19.851677, 19.529999, 18.778242]
 
         self.sparse_retrieval = SparseRetrieval(tokenizer=tokenizer)
         self.dense_retrieval = DenseRetrieval(
@@ -427,7 +419,5 @@ class HybridRetrieval(Retrieval):
         hybrid_id_score.sort(key=lambda x: x[1], reverse=True)
         hybrid_ids = list(map(lambda x: x[0], hybrid_id_score))
         hybrid_scores = list(map(lambda x: x[1], hybrid_id_score))
-        # hybrid_ids_dict[query] = hybrid_ids
-        # hybrid_socres_dict[query] = hybrid_scores
 
         return hybrid_ids, hybrid_scores
