@@ -90,7 +90,7 @@ python train.py
 
 ### inference
 
-retrieval 과 mrc 모델의 학습이 완료되면 `baseline_inference/inference.py` 를 이용해 odqa 를 진행할 수 있습니다.
+retrieval 과 mrc 모델의 학습이 완료되면 `inference.py` 를 이용해 odqa 를 진행할 수 있습니다.
 
 
 * 학습한 모델의  test_dataset에 대한 결과를 제출하기 위해선 추론(`--do_predict`)만 진행하면 됩니다. 
