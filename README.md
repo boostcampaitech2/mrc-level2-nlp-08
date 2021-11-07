@@ -66,7 +66,6 @@ python train.py
 ### inference
 
 retrieval 과 mrc 모델의 학습이 완료되면 `baseline_inference/inference.py` 를 이용해 odqa 를 진행할 수 있습니다.
-# 현재 hb_retrieval로 inference 파일이 없어 경로가 제대로 지정되어 있지 않습니다. hb_retrieval 경로로 지정하는 것이 필요
 
 
 * 학습한 모델의  test_dataset에 대한 결과를 제출하기 위해선 추론(`--do_predict`)만 진행하면 됩니다. 
