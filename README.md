@@ -49,7 +49,7 @@ data에 대한 argument 는 `arguments.py` 의 `DataTrainingArguments` 에서 �
 python clean_dataset.py
 ```
 
-# 훈련, 추론
+## 훈련, 추론
 
 ### train
 
