@@ -32,6 +32,8 @@ baseline_inference/utils_qa.py   # 기타 유틸 함수 제공
     ./train_dataset/           # 학습에 사용할 데이터셋. train 과 validation 으로 구성 
     ./test_dataset/            # 제출에 사용될 데이터셋. validation 으로 구성 
     ./wikipedia_documents.json # 위키피디아 문서 집합. retrieval을 위해 쓰이는 corpus.
+    ./new_train_dataset/           # 학습에 사용할 전처리 된 데이터셋. 
+    ./preprocess_wiki.json         # 전처리된 위키피디아 문서 집합. retrieval을 위해 쓰이는 corpus.
 ```
 
 data에 대한 argument 는 `arguments.py` 의 `DataTrainingArguments` 에서 확인 가능합니다. 
@@ -39,8 +41,13 @@ data에 대한 argument 는 `arguments.py` 의 `DataTrainingArguments` 에서 �
 
 ## Preprocess
 ```
-python clean_dataset.py
-python Retrieval/caching/setting.py
+python clean_dataset.py # 전처리 된 train/test/wiki 생성
+python Retrieval/caching/setting.py # retriever에 필요한 dictionary 생성
+```
+
+## Training Dense Retrieval
+```
+python Retrieval/dense_train.py # dense retriever 생성
 ```
 
 ## 훈련, 추론
