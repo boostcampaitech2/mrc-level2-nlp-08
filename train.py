@@ -69,19 +69,10 @@ def train(settings, args):
     else:
         trainer.train()
     trainer.save_model()
-    # trainer.evaluate()
 
 
 if __name__ == "__main__":
     os.environ["WANDB_DISABLED"] = "true"
-
-    # wandb.init(
-    #     project="MRC_aeda",
-    #     entity="chungye-mountain-sherpa",
-    #     # name="topk_5_with_lstm_layers",
-    #     name="sota_train_with_cnn_and_lstm_head",
-    #     group="qg_dataset",
-    # )
 
     parser = HfArgumentParser((SettingsArguments, Arguments))
     settings, args = parser.parse_args_into_dataclasses()
