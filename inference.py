@@ -24,12 +24,15 @@ def inference(settings, args):
     args.tokenizer = AutoTokenizer.from_pretrained(settings.trained_model_path)
     model = AutoModelForQuestionAnswering.from_pretrained(settings.trained_model_path)
     data_collator = DataCollatorWithPadding(
-        tokenizer=args.tokenizer, pad_to_multiple_of=args.pad_to_multiple_of if args.fp16 else None
+        tokenizer=args.tokenizer,
+        pad_to_multiple_of=args.pad_to_multiple_of if args.fp16 else None,
     )
     args.dataset = load_from_disk(settings.testset_path)
 
     retriever = SparseRetrieval(
-        tokenize_fn=args.tokenizer, data_path="../data", context_path="preprocess_wiki.json"
+        tokenize_fn=args.tokenizer,
+        data_path="../data",
+        context_path="preprocess_wiki.json",
     )
     retriever.get_sparse_embedding()
     df = retriever.retrieve(args.dataset["validation"], topk=args.top_k_retrieval)

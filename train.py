@@ -24,13 +24,16 @@ from models.frozen_head import FrozenHeadModel
 
 def train(settings, args):
     args.config = AutoConfig.from_pretrained(settings.pretrained_model_name_or_path)
-    args.tokenizer = AutoTokenizer.from_pretrained(settings.pretrained_model_name_or_path)
+    args.tokenizer = AutoTokenizer.from_pretrained(
+        settings.pretrained_model_name_or_path
+    )
     model = AutoModelForQuestionAnswering.from_pretrained(
         settings.pretrained_model_name_or_path, config=args.config
     )
 
     data_collator = DataCollatorWithPadding(
-        tokenizer=args.tokenizer, pad_to_multiple_of=args.pad_to_multiple_of if args.fp16 else None
+        tokenizer=args.tokenizer,
+        pad_to_multiple_of=args.pad_to_multiple_of if args.fp16 else None,
     )
     args.dataset = load_from_disk(settings.trainset_path)
     train_dataset = args.dataset["train_concat_dataset"]
