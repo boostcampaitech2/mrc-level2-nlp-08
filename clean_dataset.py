@@ -2,19 +2,7 @@ import os
 import json
 import re
 import pandas as pd
-<<<<<<< HEAD
-from datasets import (
-    load_from_disk,
-    load_dataset,
-    Features,
-    Value,
-    Sequence,
-    DatasetDict,
-    Dataset,
-)
-=======
-from datasets import load_from_disk, load_dataset, Features, Value, Sequence, DatasetDict, Dataset
->>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
+from datasets import load_from_disk, Dataset
 
 
 def preprocess(text):
@@ -84,6 +72,7 @@ def create_processed_datasets(data_path="/opt/ml/data/"):
     Dataset.from_pandas(new_validation_data, features=train_features).save_to_disk(
         "/opt/ml/data/new_train_dataset/validation"
     )
+
 
 if __name__ == "__main__":
     create_processed_datasets()
