@@ -1,32 +1,31 @@
 # MRC Level 2 Pstage of 청계산셰르파
 
-## 설치 방법
-
-### 요구 사항
-
-```
-# data (51.2 MB)
-tar -xzf data.tar.gz
-
-# 필요한 파이썬 패키지 설치. 
-bash ./install/install_requirements.sh
-```
-
 ## 파일 구성
-
 
 ### 저장소 구조
 
 ```bash
-./assets/                # readme 에 필요한 이미지 저장
-./install/               # 요구사항 설치 파일 
-./data/                  # 전체 데이터. 아래 상세 설명
 ./Retrieval/             # Dense(BertEncoder), Sparse(BM25), Hybrid(Dense + Sparse) retrieval 제공
 arguments.py             # 실행되는 모든 argument가 dataclass 의 형태로 저장되어있음
+<<<<<<< HEAD
 trainer_qa.py            # MRC 모델 학습에 필요한 trainer 제공.
 utils.py                 # 기타 유틸 함수 제공 
+=======
+clean_dataset.py         # 데이터셋을 전처리하는 코드
+utils.py              # 기타 유틸 함수 제공 
+
+>>>>>>> 66debaf909440dd8de6a24dcf678925e2dd834a4
 train.py                 # MRC, Retrieval 모델 학습 및 평가 
-inference.py		     # ODQA 모델 평가 또는 제출 파일 (predictions.json) 생성
+last_process.py          # n_best prediction의 중복된 답의 확률을 합친 결과를 생성하는 파일
+preprocess.py            # 데이터를 입력 형식에 맞게 수정해주는 파일
+metric.py                # 필요한 Metric을 제공하는 파일
+```
+
+```bash
+baseline_inference/inference.py	# ODQA 모델 평가 또는 제출 파일 (predictions.json) 생성
+baseline_inference/arguments.py # 실행되는 모든 argument가 dataclass 의 형태로 저장되어있음
+baseline_inference/trainer_qa.py # MRC 모델 학습에 필요한 trainer 제공.
+baseline_inference/utils_qa.py   # 기타 유틸 함수 제공 
 ```
 
 ## 데이터 소개
@@ -38,6 +37,8 @@ inference.py		     # ODQA 모델 평가 또는 제출 파일 (predictions.json) 
     ./train_dataset/           # 학습에 사용할 데이터셋. train 과 validation 으로 구성 
     ./test_dataset/            # 제출에 사용될 데이터셋. validation 으로 구성 
     ./wikipedia_documents.json # 위키피디아 문서 집합. retrieval을 위해 쓰이는 corpus.
+    ./new_train_dataset/           # 학습에 사용할 전처리 된 데이터셋. 
+    ./preprocess_wiki.json         # 전처리된 위키피디아 문서 집합. retrieval을 위해 쓰이는 corpus.
 ```
 
 data에 대한 argument 는 `arguments.py` 의 `DataTrainingArguments` 에서 확인 가능합니다. 
@@ -45,24 +46,32 @@ data에 대한 argument 는 `arguments.py` 의 `DataTrainingArguments` 에서 �
 
 ## Preprocess
 ```
-python clean_dataset.py
-python Retrieval/caching/setting.py
+python clean_dataset.py # 전처리 된 train/test/wiki 생성
+python Retrieval/caching/setting.py # retriever에 필요한 dictionary 생성
+```
+
+## Training Dense Retrieval
+
+SparseRetrieval으로 train question, validation question에 대해 top k개의 wiki id들을 찾은 후 인자를 넘겨주어야 합니다.
+```
+python Retrieval/dense_train.py # dense retriever 생성
 ```
 
 ## 훈련, 추론
 
-### train
+### train - default(train with 4 concatenated passages)
 
-만약 arguments 에 대한 세팅을 직접하고 싶다면 `arguments.py` 를 참고해주세요. 
-
+make_train_data_with_concat.ipynb를 먼저 실행 
 ```
 # 학습 예시 (train_dataset 사용)
 python train.py
 ```
+만약 arguments 에 대한 세팅을 직접하고 싶다면 `arguments.py` 를 참고해주세요. 
 
 ### inference
 
 retrieval 과 mrc 모델의 학습이 완료되면 `baseline_inference/inference.py` 를 이용해 odqa 를 진행할 수 있습니다.
+
 
 * 학습한 모델의  test_dataset에 대한 결과를 제출하기 위해선 추론(`--do_predict`)만 진행하면 됩니다. 
 
