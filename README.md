@@ -5,28 +5,42 @@
 ### 저장소 구조
 
 ```bash
-./Retrieval/             # Dense(BertEncoder), Sparse(BM25), Hybrid(Dense + Sparse) retrieval 제공
-arguments.py             # 실행되는 모든 argument가 dataclass 의 형태로 저장되어있음
-<<<<<<< HEAD
-trainer_qa.py            # MRC 모델 학습에 필요한 trainer 제공.
-utils.py                 # 기타 유틸 함수 제공 
-=======
-clean_dataset.py         # 데이터셋을 전처리하는 코드
-utils.py              # 기타 유틸 함수 제공 
-
->>>>>>> 66debaf909440dd8de6a24dcf678925e2dd834a4
-train.py                 # MRC, Retrieval 모델 학습 및 평가 
-last_process.py          # n_best prediction의 중복된 답의 확률을 합친 결과를 생성하는 파일
-preprocess.py            # 데이터를 입력 형식에 맞게 수정해주는 파일
-metric.py                # 필요한 Metric을 제공하는 파일
+├── EDA.ipynb
+├── README.md
+├── Retrieval # Dense(BertEncoder), Sparse(BM25), Hybrid(Dense + Sparse) retrieval 제공
+│   ├── caching
+│   │   ├── setting.ipynb
+│   │   └── setting.py
+│   ├── dense_model.py
+│   ├── dense_train.py
+│   ├── dense_train_utils.py
+│   ├── retrieval.py
+│   └── retrieval_rerank_biencoder_crossencoder.ipynb # biencoder -> crossencoder를 사용하여 retrieval rerank
+├── arguments.py # 실행되는 모든 argument가 dataclass 의 형태로 저장되어있음
+├── augmentations
+│   ├── aeda.py # AEDA Augmentation
+│   ├── context_shuffle.ipynb # Context를 shuffle하는 Augmentation
+│   └── ner_and_question_generation.ipynb # Pororo의 ner과 question generation을 이용한 Augmentation
+├── diff_prediction.py
+├── for_submit
+│   ├── ensemble.ipynb
+│   ├── last_process.py # n_best prediction의 중복된 답의 확률을 합친 결과를 생성하는 파일
+│   └── post_process.ipynb
+├── inference.py
+├── metric.py # 필요한 Metric을 제공하는 파일
+├── models
+│   ├── cnn_head.py # cnn head를 부착한 backbone
+│   ├── frozen_head.py # backbone을 fine tuning한 sota 모델의 parameter를 Freezing하고 head부착
+│   └── lstm_roberta.py # roberta에 lstm layer 추가
+├── process.py # 데이터를 입력 형식에 맞게 수정해주는 파일
+├── setup
+│   ├── How_to_use_Retrieval.ipynb # Retrieval 사용법이 적힌 ipython notebook
+│   ├── clean_dataset.py # 데이터셋을 전처리하는 코드
+│   └── make_train_data_with_concat.ipynb
+├── train.py # MRC, Retrieval 모델 학습 및 평가 
+└── utils.py # 기타 유틸 함수 제공 
 ```
 
-```bash
-baseline_inference/inference.py	# ODQA 모델 평가 또는 제출 파일 (predictions.json) 생성
-baseline_inference/arguments.py # 실행되는 모든 argument가 dataclass 의 형태로 저장되어있음
-baseline_inference/trainer_qa.py # MRC 모델 학습에 필요한 trainer 제공.
-baseline_inference/utils_qa.py   # 기타 유틸 함수 제공 
-```
 
 ## 데이터 소개
 

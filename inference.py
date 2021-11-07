@@ -24,7 +24,8 @@ import pickle
 def inference(settings, args):
     args.config = AutoConfig.from_pretrained(settings.trained_model_path)
     args.tokenizer = AutoTokenizer.from_pretrained(settings.trained_model_path)
-    model = AutoModelForQuestionAnswering.from_pretrained(settings.trained_model_path)
+    model = AutoModelForQuestionAnswering.from_pretrained(
+        settings.trained_model_path)
     data_collator = DataCollatorWithPadding(
         tokenizer=args.tokenizer,
         pad_to_multiple_of=args.pad_to_multiple_of if args.fp16 else None,
@@ -32,15 +33,11 @@ def inference(settings, args):
     args.dataset = load_from_disk(settings.testset_path)
 
     eval_dataset = args.dataset["validation"]
-    hybrid_retrieval = HybridRetrieval(args.tokenizer, "p_encoder/", "q_encoder/")
+    hybrid_retrieval = HybridRetrieval(
+        args.tokenizer, "p_encoder/", "q_encoder/")
     top_k_passage_ids, _ = hybrid_retrieval.get_topk_doc_id_and_score_for_querys(
         eval_dataset.to_pandas()["question"].to_list(), args.top_k_retrieval
     )
-    # hybrid_retrieval = DenseRetrieval(args.tokenizer, "p_encoder/", "q_encoder/")
-    # with open("tt.bin", "rb") as f:
-    #     top_k_passage_ids = pickle.load(f)
-    # with open("tt.bin", "wb") as file:
-    #     pickle.dump(top_k_passage_ids, file)  # 테스트1
 
     args.dataset = run_dense_retrival(
         args.dataset,
@@ -70,16 +67,12 @@ def inference(settings, args):
 
 def run_dense_retrival(eval_datasets, top_k_ids_dict, wiki_id_context_dict):
     question_texts = eval_datasets["validation"]["question"]
-    # print(top_k_ids_dict)
-    # print(question_texts[0])
     total = []
     for i in range(len(eval_datasets["validation"]["id"])):
         texts = []
-        # print(top_k_ids_dict[question_texts[i]])
         for j in range(len(top_k_ids_dict[question_texts[i]])):
-            # print(j)
-            # print(wiki_id_context_dict[top_k_ids_dict[question_texts[i]][j]])
-            texts.append(wiki_id_context_dict[top_k_ids_dict[question_texts[i]][j]])
+            texts.append(
+                wiki_id_context_dict[top_k_ids_dict[question_texts[i]][j]])
         total.append(" ".join(texts))
 
     df = pd.DataFrame(
