@@ -46,20 +46,22 @@ python Retrieval/caching/setting.py # retriever에 필요한 dictionary 생성
 ```
 
 ## Training Dense Retrieval
+
+SparseRetrieval으로 train question, validation question에 대해 top k개의 wiki id들을 찾은 후 인자를 넘겨주어야 합니다.
 ```
 python Retrieval/dense_train.py # dense retriever 생성
 ```
 
 ## 훈련, 추론
 
-### train
+### train - default(train with 4 concatenated passages)
 
-만약 arguments 에 대한 세팅을 직접하고 싶다면 `arguments.py` 를 참고해주세요. 
-
+make_train_data_with_concat.ipynb를 먼저 실행 
 ```
 # 학습 예시 (train_dataset 사용)
 python train.py
 ```
+만약 arguments 에 대한 세팅을 직접하고 싶다면 `arguments.py` 를 참고해주세요. 
 
 ### inference
 
