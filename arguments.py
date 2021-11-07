@@ -53,7 +53,6 @@ class Seq2SeqArguments(Seq2SeqTrainingArguments):
         default="epoch",
         metadata={"help": "The evaluation strategy to use."},
     )
-    #eval_steps: int = field(default=10, metadata={"help": "Log every X updates steps."})
     logging_steps: int = field(default=200, metadata={"help": "logging steps"})
     per_device_train_batch_size: int = field(
         default=16, metadata={"help": "Batch size per GPU/TPU core/CPU for training."}

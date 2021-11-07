@@ -27,8 +27,7 @@ def inference(settings, args):
         tokenizer=args.tokenizer, pad_to_multiple_of=args.pad_to_multiple_of if args.fp16 else None
     )
     args.dataset = load_from_disk(settings.testset_path)
-
-    ##
+    
     # retriever = SparseRetrieval(
     #     tokenize_fn=args.tokenizer, data_path="../../data", context_path="preprocess_wiki.json"
     # )
@@ -42,7 +41,6 @@ def inference(settings, args):
     #     }
     # )
     # args.dataset = DatasetDict({"validation": Dataset.from_pandas(df, features=f)})
-    ##
 
     eval_dataset = args.dataset["validation"]
     column_names = eval_dataset.column_names
