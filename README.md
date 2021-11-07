@@ -21,7 +21,7 @@ bash ./install/install_requirements.sh
 ./assets/                # readme 에 필요한 이미지 저장
 ./install/               # 요구사항 설치 파일 
 ./data/                  # 전체 데이터. 아래 상세 설명
-retrieval.py             # sparse retreiver 모듈 제공 
+./Retrieval/             # Dense(BertEncoder), Sparse(BM25), Hybrid(Dense + Sparse) retrieval 제공
 arguments.py             # 실행되는 모든 argument가 dataclass 의 형태로 저장되어있음
 trainer_qa.py            # MRC 모델 학습에 필요한 trainer 제공.
 utils_qa.py              # 기타 유틸 함수 제공 
