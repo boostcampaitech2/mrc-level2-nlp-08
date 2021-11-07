@@ -23,9 +23,9 @@
 │   └── ner_and_question_generation.ipynb # Pororo의 ner과 question generation을 이용한 Augmentation
 ├── diff_prediction.py
 ├── for_submit
-│   ├── ensemble.ipynb
-│   ├── last_process.py # n_best prediction의 중복된 답의 확률을 합친 결과를 생성하는 파일
-│   └── post_process.ipynb
+│   ├── ensemble.ipynb # 여러 nbest prediction과 prediction 파일을 확률값, Hard voting으로 합친 결과를 생성하는 파일
+│   ├── single_nbest_prediction_max_prob_ensemble.py # n_best prediction의 중복된 답의 확률을 합친 결과를 생성하는 파일
+│   └── post_process.ipynb # 제출파일에 조사를 제거하는 파일
 ├── inference.py
 ├── metric.py # 필요한 Metric을 제공하는 파일
 ├── models
@@ -100,6 +100,11 @@ retrieval 과 mrc 모델의 학습이 완료되면 `inference.py` 를 이용해 
 # wandb 가 로그인 되어있다면 자동으로 결과가 wandb 에 저장됩니다. 아니면 단순히 출력됩니다
 python inference.py --output_dir ./outputs/test_dataset/ --dataset_name ../data/test_dataset/ --model_name_or_path ./models/train_dataset/ --do_predict
 ```
+
+### last process for submit
+- `for_submit/ensemble.py`
+- `for_submit/single_nbest_prediction_max_prob_ensemble.py`
+- `for_submit/post_process.ipynb`
 
 ### How to submit
 
