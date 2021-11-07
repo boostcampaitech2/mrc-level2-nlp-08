@@ -41,7 +41,6 @@ def inference(settings, args):
         }
     )
     args.dataset = DatasetDict({"validation": Dataset.from_pandas(df, features=f)})
-    ##
 
     eval_dataset = args.dataset["validation"]
     column_names = eval_dataset.column_names
