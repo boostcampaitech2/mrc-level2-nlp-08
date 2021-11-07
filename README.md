@@ -4,6 +4,7 @@
 
 ```
 python clean_dataset.py
+python Retrieval/caching/setting.py
 ```
 
 ## Train
