@@ -64,6 +64,12 @@ python clean_dataset.py # 전처리 된 train/test/wiki 생성
 python Retrieval/caching/setting.py # retriever에 필요한 dictionary 생성
 ```
 
+## Data Augmentation
+
+- `augmentation/aeda.py`
+- `augmentation/context_shuffle.ipynb`
+- `augmentation/ner_and_question_generation.ipynb`
+
 ## Training Dense Retrieval
 
 SparseRetrieval으로 train question, validation question에 대해 top k개의 wiki id들을 찾은 후 인자를 넘겨주어야 합니다.
