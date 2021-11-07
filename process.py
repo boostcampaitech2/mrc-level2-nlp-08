@@ -3,6 +3,8 @@ from bisect import bisect_left
 
 def preprocess(args, examples):
     answers = examples["answers"]
+    # print(examples["question"][0])
+    # print(examples["context"][0])
     examples = args.tokenizer(
         examples["question"],
         examples["context"],
@@ -13,7 +15,7 @@ def preprocess(args, examples):
         return_offsets_mapping=True,
         # padding="max_length",  #
     )
-    # print(examples)
+    # print(examples["token_type_ids"][0])
 
     examples["start_positions"] = []
     examples["end_positions"] = []
@@ -35,11 +37,11 @@ def preprocess(args, examples):
         # print(examples["token_type_ids"][i])
         # print(len(examples.sequence_ids(i)))
         # token_type_ids = examples.sequence_ids(i)
-        token_type_ids = examples["token_type_ids"][i]
+        token_type_ids = examples.sequence_ids(i)
         examples["token_type_ids"][i] = token_type_ids
-
-        #print(token_type_ids.index(1))
-        #print(examples.sequence_ids(i).index(1))
+        # print(token_type_ids)
+        # print(token_type_ids.index(1))
+        # print(examples.sequence_ids(i).index(1))
 
         answer_info = answers[overflow_to_sample_mapping]
         if answer_info:

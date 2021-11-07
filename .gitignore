@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 /__pycache__
 /wandb
 /output
@@ -11,8 +10,6 @@
 /Retrieval/caching/wiki_id_context_pair.bin
 
 nohup.out
-=======
->>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
 # Python
 __pycache__
 

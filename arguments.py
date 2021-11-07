@@ -8,9 +8,9 @@ from transformers.trainer_utils import IntervalStrategy
 @dataclass
 class SettingsArguments:
     pretrained_model_name_or_path: str = field(default="klue/roberta-large")
-    trained_model_path: str = field(default="./outputs")
+    trained_model_path: str = field(default="/opt/ml/mrc-level2-nlp-08/output/")
     trainset_path: str = field(default="../data/new_train_dataset")
-    testset_path: str = field(default="../tt")
+    testset_path: str = field(default="../data/test_dataset")
     load_from_cache_file: bool = field(default=False)
     num_proc: Optional[int] = field(default=None)
 
@@ -40,7 +40,7 @@ class Arguments(TrainingArguments):
         metadata={"help": "Weight decay for AdamW if we apply some."},
     )
     num_train_epochs: float = field(
-        default=5.0, metadata={"help": "Total number of training epochs to perform."}
+        default=1.0, metadata={"help": "Total number of training epochs to perform."}
     )
     output_dir: str = field(
         default="output",
@@ -49,7 +49,7 @@ class Arguments(TrainingArguments):
         },
     )
     overwrite_output_dir: bool = field(
-        default=False,
+        default=True,
         metadata={
             "help": (
                 "Overwrite the content of the output directory."
@@ -141,7 +141,7 @@ class Arguments(TrainingArguments):
         metadata={"help": "Whether to run passage retrieval using sparse embedding."},
     )
     top_k_retrieval: int = field(
-        default=20,
+        default=3,
         metadata={
             "help": "Define how many top-k passages to retrieve based on similarity."
         },
