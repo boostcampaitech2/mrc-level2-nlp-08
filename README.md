@@ -1,5 +1,3 @@
-# Readme
-
 # MRC Level 2 Pstage of 청계산셰르파
 
 ## 설치 방법
