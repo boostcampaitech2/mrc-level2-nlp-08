@@ -1,7 +1,6 @@
 import pandas as pd
 import pickle
 
-
 def main():
     wiki_dataset = pd.read_json("/opt/ml/data/preprocess_wiki.json", orient="index")
 
