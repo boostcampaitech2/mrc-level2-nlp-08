@@ -1,33 +1,26 @@
 # MRC Level 2 Pstage of 청계산셰르파
 
-## 설치 방법
-
-### 요구 사항
-
-```
-# data (51.2 MB)
-tar -xzf data.tar.gz
-
-# 필요한 파이썬 패키지 설치. 
-bash ./install/install_requirements.sh
-```
-
 ## 파일 구성
-
 
 ### 저장소 구조
 
 ```bash
-./assets/                # readme 에 필요한 이미지 저장
-./install/               # 요구사항 설치 파일 
-./data/                  # 전체 데이터. 아래 상세 설명
 ./Retrieval/             # Dense(BertEncoder), Sparse(BM25), Hybrid(Dense + Sparse) retrieval 제공
 arguments.py             # 실행되는 모든 argument가 dataclass 의 형태로 저장되어있음
-trainer_qa.py            # MRC 모델 학습에 필요한 trainer 제공.
-utils_qa.py              # 기타 유틸 함수 제공 
+clean_dataset.py         # 데이터셋을 전처리하는 코드
+utils.py              # 기타 유틸 함수 제공 
 
 train.py                 # MRC, Retrieval 모델 학습 및 평가 
-inference.py		     # ODQA 모델 평가 또는 제출 파일 (predictions.json) 생성
+last_process.py          # n_best prediction의 중복된 답의 확률을 합친 결과를 생성하는 파일
+preprocess.py            # 데이터를 입력 형식에 맞게 수정해주는 파일
+metric.py                # 필요한 Metric을 제공하는 파일
+```
+
+```bash
+baseline_inference/inference.py	# ODQA 모델 평가 또는 제출 파일 (predictions.json) 생성
+baseline_inference/arguments.py # 실행되는 모든 argument가 dataclass 의 형태로 저장되어있음
+baseline_inference/trainer_qa.py # MRC 모델 학습에 필요한 trainer 제공.
+baseline_inference/utils_qa.py   # 기타 유틸 함수 제공 
 ```
 
 ## 데이터 소개
