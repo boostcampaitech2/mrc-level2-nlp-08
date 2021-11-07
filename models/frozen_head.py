@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 from torch.nn import CrossEntropyLoss
 from torch.nn.modules import dropout
@@ -27,7 +28,7 @@ from transformers import AutoModel
     """,
     ROBERTA_START_DOCSTRING,
 )
-class LSTMRobertaForQuestionAnswering(RobertaPreTrainedModel):
+class FrozenHeadModel(RobertaPreTrainedModel):
     _keys_to_ignore_on_load_unexpected = [r"pooler"]
     _keys_to_ignore_on_load_missing = [r"position_ids"]
 
@@ -38,20 +39,16 @@ class LSTMRobertaForQuestionAnswering(RobertaPreTrainedModel):
         assert "roberta" in config.model_type.lower(), "Base model does not match with any Roberta variants"
 
         self.roberta = AutoModel.from_pretrained(
-            pretrained_model_name_or_path, config=config, add_pooling_layer=False
+            "/opt/ml/develop/outputs/65_830_2epoch_my_concat_k_5_hb_k_20",
+            config=config,
+            add_pooling_layer=False,
         )
+
+        for p in self.roberta.parameters():
+            p.requires_grad = False
 
         self.hidden_dim = config.hidden_size
-
-        self.lstm = nn.LSTM(
-            input_size=self.hidden_dim,
-            hidden_size=self.hidden_dim,
-            num_layers=2,
-            dropout=0.2,
-            batch_first=True,
-            bidirectional=True,
-        )
-        self.qa_outputs = nn.Linear(in_features=self.hidden_dim * 2, out_features=config.num_labels)
+        self.qa_outputs = nn.Linear(in_features=self.hidden_dim, out_features=config.num_labels)
 
     @add_start_docstrings_to_model_forward(ROBERTA_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(
@@ -101,9 +98,7 @@ class LSTMRobertaForQuestionAnswering(RobertaPreTrainedModel):
         sequence_output = outputs[0]
         # print(f"{sequence_output.shape=}")
 
-        lstm_output, (h, c) = self.lstm(sequence_output)
-
-        logits = self.qa_outputs(lstm_output)
+        logits = self.qa_outputs(sequence_output)
         # print(f"{logits.shape=}")
 
         start_logits, end_logits = logits.split(1, dim=-1)

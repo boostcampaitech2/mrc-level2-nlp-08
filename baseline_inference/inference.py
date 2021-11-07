@@ -33,16 +33,23 @@ from transformers import (
 
 from utils_qa import postprocess_qa_predictions, check_no_error
 from trainer_qa import QuestionAnsweringTrainer
+<<<<<<< HEAD
 
 # from retrieval import SparseRetrieval
+=======
+from retrieval import SparseRetrieval
+>>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
 
 from arguments import (
     ModelArguments,
     DataTrainingArguments,
 )
+<<<<<<< HEAD
 import pickle
 from tqdm import tqdm
 import pandas as pd
+=======
+>>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
 
 
 logger = logging.getLogger(__name__)
@@ -52,6 +59,7 @@ def main():
     # 가능한 arguments 들은 ./arguments.py 나 transformer package 안의 src/transformers/training_args.py 에서 확인 가능합니다.
     # --help flag 를 실행시켜서 확인할 수 도 있습니다.
 
+<<<<<<< HEAD
     parser = HfArgumentParser(
         (ModelArguments, DataTrainingArguments, TrainingArguments)
     )
@@ -59,6 +67,12 @@ def main():
 
     training_args.do_train = True
     training_args.per_device_eval_batch_size = 32
+=======
+    parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainingArguments))
+    model_args, data_args, training_args = parser.parse_args_into_dataclasses()
+
+    training_args.do_train = True
+>>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
 
     print(f"model is from {model_args.model_name_or_path}")
     print(f"data is from {data_args.dataset_name}")
@@ -76,12 +90,17 @@ def main():
     # 모델을 초기화하기 전에 난수를 고정합니다.
     set_seed(training_args.seed)
 
+<<<<<<< HEAD
     datasets = load_from_disk("/opt/ml/data/test_dataset")
     print(datasets)
+=======
+    datasets = load_from_disk(data_args.test_path)
+>>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
 
     # AutoConfig를 이용하여 pretrained model 과 tokenizer를 불러옵니다.
     # argument로 원하는 모델 이름을 설정하면 옵션을 바꿀 수 있습니다.
     config = AutoConfig.from_pretrained(
+<<<<<<< HEAD
         model_args.config_name
         if model_args.config_name
         else model_args.model_name_or_path,
@@ -94,10 +113,21 @@ def main():
     )
     model = AutoModelForQuestionAnswering.from_pretrained(
         model_args.model_name_or_path,
+=======
+        model_args.config_name if model_args.config_name else model_args.model_name_or_path,
+    )
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
+        use_fast=True,
+    )
+    model = AutoModelForQuestionAnswering.from_pretrained(
+        model_args.pretrained_model_path,
+>>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
         from_tf=bool(".ckpt" in model_args.model_name_or_path),
         config=config,
     )
 
+<<<<<<< HEAD
     # True일 경우 : run passage retrieval
     if data_args.eval_retrieval:
         # datasets = run_sparse_retrieval(
@@ -109,11 +139,14 @@ def main():
         datasets = run_dense_retrival(datasets, data_args.top_k_retrieval)
     # print(datasets['validation']['context'][:10])
 
+=======
+>>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
     # eval or predict mrc model
     if training_args.do_eval or training_args.do_predict:
         run_mrc(data_args, training_args, model_args, datasets, tokenizer, model)
 
 
+<<<<<<< HEAD
 def run_sparse_retrieval(
     tokenize_fn: Callable[[str], List[str]],
     datasets: DatasetDict,
@@ -212,6 +245,8 @@ def run_dense_retrival(text_data, top_k):
     return datasets
 
 
+=======
+>>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
 def run_mrc(
     data_args: DataTrainingArguments,
     training_args: TrainingArguments,
@@ -222,7 +257,11 @@ def run_mrc(
 ) -> NoReturn:
 
     # eval 혹은 prediction에서만 사용함
+<<<<<<< HEAD
     column_names = datasets["validation"].column_names
+=======
+    column_names = datasets.column_names
+>>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
 
     question_column_name = "question" if "question" in column_names else column_names[0]
     context_column_name = "context" if "context" in column_names else column_names[1]
@@ -233,9 +272,13 @@ def run_mrc(
     pad_on_right = tokenizer.padding_side == "right"
 
     # 오류가 있는지 확인합니다.
+<<<<<<< HEAD
     last_checkpoint, max_seq_length = check_no_error(
         data_args, training_args, datasets, tokenizer
     )
+=======
+    last_checkpoint, max_seq_length = check_no_error(data_args, training_args, datasets, tokenizer)
+>>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
 
     # Validation preprocessing / 전처리를 진행합니다.
     def prepare_validation_features(examples):
@@ -249,8 +292,12 @@ def run_mrc(
             stride=data_args.doc_stride,
             return_overflowing_tokens=True,
             return_offsets_mapping=True,
+<<<<<<< HEAD
             # roberta모델을 사용할 경우 False, bert를 사용할 경우 True로 표기해야합니다.
             return_token_type_ids=False,
+=======
+            # return_token_type_ids=False, # roberta모델을 사용할 경우 False, bert를 사용할 경우 True로 표기해야합니다.
+>>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
             padding="max_length" if data_args.pad_to_max_length else False,
         )
 
@@ -277,7 +324,11 @@ def run_mrc(
             ]
         return tokenized_examples
 
+<<<<<<< HEAD
     eval_dataset = datasets["validation"]
+=======
+    eval_dataset = datasets
+>>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
 
     # Validation Feature 생성
     eval_dataset = eval_dataset.map(
@@ -291,9 +342,13 @@ def run_mrc(
     # Data collator
     # flag가 True이면 이미 max length로 padding된 상태입니다.
     # 그렇지 않다면 data collator에서 padding을 진행해야합니다.
+<<<<<<< HEAD
     data_collator = DataCollatorWithPadding(
         tokenizer, pad_to_multiple_of=8 if training_args.fp16 else None
     )
+=======
+    data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=8 if training_args.fp16 else None)
+>>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
 
     # Post-processing:
     def post_processing_function(
@@ -311,14 +366,19 @@ def run_mrc(
             output_dir=training_args.output_dir,
         )
         # Metric을 구할 수 있도록 Format을 맞춰줍니다.
+<<<<<<< HEAD
         formatted_predictions = [
             {"id": k, "prediction_text": v} for k, v in predictions.items()
         ]
+=======
+        formatted_predictions = [{"id": k, "prediction_text": v} for k, v in predictions.items()]
+>>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
 
         if training_args.do_predict:
             return formatted_predictions
         elif training_args.do_eval:
             references = [
+<<<<<<< HEAD
                 {"id": ex["id"], "answers": ex[answer_column_name]}
                 for ex in datasets["validation"]
             ]
@@ -326,6 +386,12 @@ def run_mrc(
             return EvalPrediction(
                 predictions=formatted_predictions, label_ids=references
             )
+=======
+                {"id": ex["id"], "answers": ex[answer_column_name]} for ex in datasets["validation"]
+            ]
+
+            return EvalPrediction(predictions=formatted_predictions, label_ids=references)
+>>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
 
     metric = load_metric("squad")
 
@@ -339,7 +405,11 @@ def run_mrc(
         args=training_args,
         train_dataset=None,
         eval_dataset=eval_dataset,
+<<<<<<< HEAD
         eval_examples=datasets["validation"],
+=======
+        eval_examples=datasets,
+>>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
         tokenizer=tokenizer,
         data_collator=data_collator,
         post_process_function=post_processing_function,
@@ -348,6 +418,7 @@ def run_mrc(
 
     logger.info("*** Evaluate ***")
 
+<<<<<<< HEAD
     # eval dataset & eval example - predictions.json 생성됨
     if training_args.do_predict:
         predictions = trainer.predict(
@@ -359,6 +430,14 @@ def run_mrc(
             "No metric can be presented because there is no correct answer given. Job done!"
         )
         # trainer.evaluate()
+=======
+    #### eval dataset & eval example - predictions.json 생성됨
+    if training_args.do_predict:
+        predictions = trainer.predict(test_dataset=eval_dataset, test_examples=datasets)
+
+        # predictions.json 은 postprocess_qa_predictions() 호출시 이미 저장됩니다.
+        print("No metric can be presented because there is no correct answer given. Job done!")
+>>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
 
     if training_args.do_eval:
         metrics = trainer.evaluate()

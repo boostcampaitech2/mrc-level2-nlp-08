@@ -2,6 +2,7 @@ import os
 import json
 import re
 import pandas as pd
+<<<<<<< HEAD
 from datasets import (
     load_from_disk,
     load_dataset,
@@ -11,6 +12,9 @@ from datasets import (
     DatasetDict,
     Dataset,
 )
+=======
+from datasets import load_from_disk, load_dataset, Features, Value, Sequence, DatasetDict, Dataset
+>>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
 
 
 def preprocess(text):
@@ -55,21 +59,6 @@ def preprocess_wiki(dataset):
 
 
 def create_processed_datasets(data_path="/opt/ml/data/"):
-    # train_features = Features(
-    #     {
-    #         "answers": Sequence(
-    #             feature={
-    #                 "text": Value(dtype="string", id=None),
-    #                 "answer_start": Value(dtype="int32", id=None),
-    #             },
-    #             length=-1,
-    #             id=None,
-    #         ),
-    #         "context": Value(dtype="string", id=None),
-    #         "id": Value(dtype="string", id=None),
-    #         "question": Value(dtype="string", id=None),
-    #     }
-    # )
 
     with open(
         os.path.join(data_path, "wikipedia_documents.json"), "r", encoding="utf-8"
@@ -95,7 +84,6 @@ def create_processed_datasets(data_path="/opt/ml/data/"):
     Dataset.from_pandas(new_validation_data, features=train_features).save_to_disk(
         "/opt/ml/data/new_train_dataset/validation"
     )
-
 
 if __name__ == "__main__":
     create_processed_datasets()

@@ -17,11 +17,15 @@ Question-Answering task와 관련된 'Trainer'의 subclass 코드 입니다.
 """
 
 from transformers import Trainer, is_datasets_available, is_torch_tpu_available
+<<<<<<< HEAD
 from transformers.trainer_utils import (
     PredictionOutput,
     denumpify_detensorize,
     EvalLoopOutput,
 )
+=======
+from transformers.trainer_utils import PredictionOutput
+>>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
 
 
 if is_datasets_available():
@@ -32,8 +36,11 @@ if is_torch_tpu_available():
     import torch_xla.debug.metrics as met
 
 # Huggingface의 Trainer를 상속받아 QuestionAnswering을 위한 Trainer를 생성합니다.
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
 class QuestionAnsweringTrainer(Trainer):
     def __init__(self, *args, eval_examples=None, post_process_function=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -83,7 +90,10 @@ class QuestionAnsweringTrainer(Trainer):
         self.control = self.callback_handler.on_evaluate(
             self.args, self.state, self.control, metrics
         )
+<<<<<<< HEAD
 
+=======
+>>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
         return metrics
 
     def predict(self, test_dataset, test_examples, ignore_keys=None):

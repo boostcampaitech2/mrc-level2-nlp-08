@@ -8,15 +8,20 @@ class ModelArguments:
     Arguments pertaining to which model/config/tokenizer we are going to fine-tune from.
     """
 
-    # "monologg/koelectra-base-v3-finetuned-korquad"
-    # "klue/roberta-large"
-    # 'kykim/bert-kor-base'
     model_name_or_path: str = field(
         default="klue/roberta-large",
         metadata={
             "help": "Path to pretrained model or model identifier from huggingface.co/models"
         },
     )
+
+    pretrained_model_path: str = field(
+        default="../outputs/checkpoint",
+        metadata={
+            "help": "Path to pretrained model or model identifier from huggingface.co/models"
+        },
+    )
+
     config_name: Optional[str] = field(
         default=None,
         metadata={
@@ -40,6 +45,10 @@ class DataTrainingArguments:
     dataset_name: Optional[str] = field(
         default="../data/train_dataset",
         metadata={"help": "The name of the dataset to use."},
+    )
+    test_path: Optional[str] = field(
+        default="../../data/test_dataset",
+        metadata={"help": "The name of the test dataset to use."},
     )
     overwrite_cache: bool = field(
         default=False,
@@ -89,7 +98,4 @@ class DataTrainingArguments:
         metadata={
             "help": "Define how many top-k passages to retrieve based on similarity."
         },
-    )
-    use_faiss: bool = field(
-        default=False, metadata={"help": "Whether to build with faiss"}
     )
