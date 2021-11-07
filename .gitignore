@@ -1,3 +1,18 @@
+<<<<<<< HEAD
+/__pycache__
+/wandb
+/output
+/Retrieval/p_encoder/pytorch_model.bin
+/Retrieval/q_encoder/pytorch_model.bin
+/Retrieval/caching/BM25Okapi.bin
+/Retrieval/caching/dense_embedding.bin
+/Retrieval/caching/id_title_pair.bin
+/Retrieval/caching/wiki_context_id_pair.bin
+/Retrieval/caching/wiki_id_context_pair.bin
+
+nohup.out
+=======
+>>>>>>> fa8f3abf98b24914406d2236aff42b665b9361bc
 # Python
 __pycache__
 
