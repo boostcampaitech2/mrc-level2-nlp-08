@@ -47,6 +47,7 @@ data에 대한 argument 는 `arguments.py` 의 `DataTrainingArguments` 에서 �
 ## Preprocess
 ```
 python clean_dataset.py
+python Retrieval/caching/setting.py
 ```
 
 ## 훈련, 추론
