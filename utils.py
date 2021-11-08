@@ -42,23 +42,3 @@ def append_neg_p(num_neg: int, wiki: list, train_context: list, answer: list):
             neg_idx += 1
     
     return p_with_neg
-
-# old deprecated version
-'''
-def append_neg_p(num_neg: int, corpus: list, train_context: list):
-    corpus = np.array(corpus)
-    p_with_neg = []
-    
-    for c in train_context:
-        while True:
-            neg_idxs = np.random.randint(len(corpus), size=num_neg)
-
-            if not c in corpus[neg_idxs]:
-                p_neg = corpus[neg_idxs]
-
-                p_with_neg.append(c)
-                p_with_neg.extend(p_neg)
-                break
-    
-    return p_with_neg
-'''

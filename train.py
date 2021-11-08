@@ -70,7 +70,6 @@ def train(args, train_dataset,  val_q_seqs, val_p_seqs, validation_document, tes
             q_outputs = q_model(**q_inputs)  #(batch_size*, emb_dim) -> 4, 756
 
             # Calculate similarity score & loss
-            # p_outputs = p_outputs.view(args.per_device_train_batch_size, -1, num_neg+1) -> 4, 756, 4
             p_outputs = torch.transpose(p_outputs.view(args.train_bs, args.num_neg+1,-1),1,2) # (batch_size, emb_dim, num_neg+1)
             q_outputs = q_outputs.view(args.train_bs, 1, -1) # (batch_size,1,emb_dim) -> 4, 1, 756
 

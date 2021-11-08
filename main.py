@@ -34,16 +34,10 @@ def main(args):
     train_data = load_from_disk(args.train_data)
     validation_data = load_from_disk(args.val_data)
     test_data = load_from_disk(args.val_data)
-    
-    # test
-    #import numpy as np
-    #sample_idx = np.random.choice(range(len(train_data)), 20)
-    #train_data = train_data[sample_idx]
 
     # load wiki data and remove duplicates
     with open('../data/wikipedia_documents.json', "r", encoding="utf-8") as f:
         wiki = json.load(f)
-    #corpus = list(dict.fromkeys([v["text"] for v in wiki.values()]))
     wiki = [v['text'] for v in wiki.values()]
 
     # append negative passages
@@ -52,10 +46,12 @@ def main(args):
     # tokenize
     ## train_data
     tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
-    train_q_seqs = tokenizer(train_data['question'], padding="max_length", truncation=True, return_tensors='pt')
     train_p_seqs = tokenizer(p_with_neg, padding="max_length", truncation=True, return_tensors='pt')
-    ## validation_data
+    ## train_query
+    train_q_seqs = tokenizer(train_data['question'], padding="max_length", truncation=True, return_tensors='pt')
+    ## validation_query
     val_q_seqs = tokenizer(validation_data['question'], padding="max_length", truncation=True, return_tensors='pt').to('cuda')
+    ## test_query
     test_q_seqs = tokenizer(test_data['question'], padding="max_length", truncation=True, return_tensors='pt').to('cuda') 
     if os.path.isfile('pickle/wiki_token'):
         with open("pickle/wiki_token", "rb") as file:
