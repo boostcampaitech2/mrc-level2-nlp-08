@@ -55,9 +55,16 @@ input
     └──utils.py
 ```
 
-- Run all the lines in 
-```elastic_search.ipynb```
+- Run all the lines in ```elastic_search.ipynb```
 
+- Download
+```
+$ wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1eMfMzv0gkcTSBQAxtQrFMP_pC5sEeQQq' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1eMfMzv0gkcTSBQAxtQrFMP_pC5sEeQQq" -O ROOT/mrc-level2-nlp-08/dense_encoder/dense_encoder.tar.gz && rm -rf /tmp/cookies.txt
+$ tar -xf ROOT/mrc-level2-nlp-08/dense_encoder/dense_encoder.tar.gz
+```
+
+# 2. .tar.gz file 압축해제 
+!tar -xf ./dense_encoder.tar.gz
 
 - Run python file to generate mask classification datasets
 ```
