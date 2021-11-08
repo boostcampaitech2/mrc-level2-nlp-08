@@ -39,84 +39,66 @@ $ pip install -r $ROOT/mrc-level2-nlp-08/requirements.txt
 - Before Preparation
 ```
 data
-└──
-input
-└──mrc-level2-nlp-08
-    ├──dense_encoder
-    ├──pickle
-    ├──scores
-    ├──.gitignore
-    ├──arguments.py
-    ├──elastic_search.ipynb
-    ├──main.py
-    ├──model.py
-    ├──readme.md
-    ├──train.py
-    └──utils.py
+mrc-level2-nlp-08
+├──dense_encoder
+├──pickle
+├──scores
+├──.gitignore
+├──arguments.py
+├──elastic_search.ipynb
+├──main.py
+├──model.py
+├──readme.md
+├──train.py
+└──utils.py
 ```
 
 - Run all the lines in ```elastic_search.ipynb```
 
-- Download
+- Download and Extract the Pretrained Weight
 ```
-$ wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1eMfMzv0gkcTSBQAxtQrFMP_pC5sEeQQq' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1eMfMzv0gkcTSBQAxtQrFMP_pC5sEeQQq" -O ROOT/mrc-level2-nlp-08/dense_encoder/dense_encoder.tar.gz && rm -rf /tmp/cookies.txt
-$ tar -xf ROOT/mrc-level2-nlp-08/dense_encoder/dense_encoder.tar.gz
-```
-
-# 2. .tar.gz file 압축해제 
-!tar -xf ./dense_encoder.tar.gz
-
-- Run python file to generate mask classification datasets
-```
-$ python data_reset.py
+$ wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1eMfMzv0gkcTSBQAxtQrFMP_pC5sEeQQq' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1eMfMzv0gkcTSBQAxtQrFMP_pC5sEeQQq" -O ROOT/mrc-level2-nlp-08/dense_encoder.tar.gz && rm -rf /tmp/cookies.txt
+$ tar -xf ROOT/mrc-level2-nlp-08/dense_encoder.tar.gz
 ```
 
-- After Data Generation:
+- Download Wiki Corpus and Klue MRC Dataset
 ```
-input
-└──data
-    ├──eval
-    |  ├──images/
-    |  └──info.csv
-    └──train
-        ├──images/
-        ├──train_18class/
-        ├──val_18class/
-        └──train.csv
+$ wget https://aistages-prod-server-public.s3.amazonaws.com/app/Competitions/000077/data/data.tar.gz -O ROOT/data.tar.gz
+$ tar -xf ROOT/data.tar.gz
 ```
+
+- After Preparation
+```
+data
+├──wikipedia_documents.json
+├──test_dataset
+└──train_dataset
+mrc-level2-nlp-08
+├──checkpoints
+├──dense_encoder
+|  └──dense_encoder.pth
+├──pickle
+|  ├──elastic_training_neg.bin
+|  └──wiki_token.bin
+├──scores
+├──.gitignore
+├──arguments.py
+├──elastic_search.ipynb
+├──main.py
+├──model.py
+├──readme.md
+├──train.py
+└──utils.py
+```
+- wiki_token.bin is automatically produced once the model is run.
+
 
 ### 2. Model Training
-
-- Early stopping applied by (default) 
-
 ```
-$ python main.py --model 7 --tf yogurt --lr 2e-3 --batch_size 16 --num_workers 4 --patience 10 --cut_mix --epochs 100
+$ python main.py 
 ```
-
-**Image Transformation**<br>
-- argument parser `--tf` can receive types of augmentation
-- Transformation functions applied to training datasets and test datasets are different: images for inference should be modified as little as possible
-
-- Consult [transformation.py](https://github.com/boostcampaitech2/image-classification-level1-30/blob/main/transformation.py) for detailed explanation on the types of transformation
+- and this will save models with ```.pth``` formats under the ```checkpoints``` folder
 
 ### 3. Inference
-```
-$ python inference.py --tf yogurt
-```
-- Running the line above will generate submission.csv as below
-
-```
-input
-└──data
-    ├──eval
-    |  ├──images/
-    |  ├──submission.csv
-    |  └──info.csv
-    └──train
-        ├──images/
-        ├──train_18class/
-        ├──val_18class/
-        └──train.csv
-```
-
+- There is no ```inference.py```. ```main.py``` creates a score file under scores folder
 
