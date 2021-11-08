@@ -16,51 +16,48 @@ $ pip install -r $ROOT/mrc-level2-nlp-08/requirements.txt
 ```
 <br/>
 
-## Dataset and Weights for Pretrained Models
-
-
-<br/>
-
 ## Function Description
 `main.py`: main module that combines and runs all other sub-modules
 
-`train.py`: trains the model by iterating through specific number of epochs
+`train.py`: trains the model by iterating through specific number of epochs. Since this model does not require minimal time for inference, we create inferences at every epoch with higher validation accuracy.
 
-`model.py`: EfficientNet model from [lukemelas](https://github.com/lukemelas/EfficientNet-PyTorch)
+`model.py`: defines Multilingual BERT class, which we will use with pretrained weights
 
-`utils.py`: required by EfficientNet model
+`arguments.py`: defines the arguements we can use for training. Uses argparser.
 
-`inference.py`: tests the model using the test dataset and outputs the inferred csv file
+`elasticsearch.ipynb`: for sampling negative samples for training. Uses elastic search results to pick pharagraphs with high scores without ground truth results.
 
-`loss.py`: calculates loss using cross entropy and f1-score
-
-`label_smoothing_loss.py`: calculates loss using cross entropy with label smoothing and f1-score
-
-`dataset.py`: generates the dataset to feed the model to train
-
-`data_reset.py`: generates the image dataset divided into 18 classes (train and validation)
-
-`early_stopping.py`: Early Stopping function from [Bjarten](https://github.com/Bjarten/early-stopping-pytorch) (patience decides how many epochs to tolerate after val loss exceeds min. val loss)
-
-`transformation.py`: a group of transformation functions that can be claimed by args parser
-
-`dashboard.ipynb`: can observe the images with labels from the inferred csv files
+`utils.py`: aid function for train.py and main.py
 <br/><br/>
 
-## USAGE
-### 1. Data Generation
+## Preparing Dataset and Weights for Pretrained Models
 
-- Before Data Generation:
+
+## USAGE
+### 1. Preparing Dataset and Weights for Pretrained Models
+
+- Before Preparation
 ```
+data
+└──
 input
-└──data
-    ├──eval
-    |  ├──images/
-    |  └──info.csv
-    └──train
-        ├──images/
-        └──train.csv
+└──mrc-level2-nlp-08
+    ├──dense_encoder
+    ├──pickle
+    ├──scores
+    ├──.gitignore
+    ├──arguments.py
+    ├──elastic_search.ipynb
+    ├──main.py
+    ├──model.py
+    ├──readme.md
+    ├──train.py
+    └──utils.py
 ```
+
+- Run all the lines in 
+```elastic_search.ipynb```
+
 
 - Run python file to generate mask classification datasets
 ```
