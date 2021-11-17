@@ -19,6 +19,10 @@ class Retrieval:
         caching_path="caching/",
         context_path="/opt/ml/data/preprocess_wiki.json",
     ):
+        '''
+        Retrieval의 최상위 클래스
+        Sparse, Dense, Hybrid 모두 이 클래스를 상속받아서 사용합니다.        
+        '''
         self.tokenizer = tokenizer
         self.wiki_dataset = pd.read_json(context_path, orient="index")
 
@@ -56,9 +60,18 @@ class Retrieval:
         self.wiki_corpus = list(self.wiki_context_id_dict.keys())
 
     def get_topk_doc_id_and_score(self, query, top_k):
+        '''
+        query를 입력받아 wiki context에서 점수가 높은 top_k개의 context의 id와 해당 score를 
+        점수가 높은 순으로 output으로 내보냅니다.
+        '''
         pass
 
     def get_topk_doc_id_and_score_for_querys(self, querys, top_k):
+        '''
+        query들을 list type으로 받아서 점수가 높은 top_k개의 context의 id와 해당 socre를 점수가 높은 순으로 
+        output으로 내보냅니다. get_topk_doc_id_and_score와의 차이점은 query를 리스트로 받기 때문에
+        최종 output은 query - ids, query - socres의 dict type입니다.
+        '''
         pass
 
 

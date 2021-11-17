@@ -118,15 +118,16 @@ def train_with_negative(
             q_encoder.train()
             p_encoder.train()
 
-            # if torch.cuda.is_available():
-            #     batch = tuple(t.cuda() for t in batch)
-
             neg_batch_ids = []
             neg_batch_att = []
             neg_batch_tti = []
             random_sampling_idx = random.randrange(0, num_neg)
-            # random_sampling_idx = num_epoch
             for batch_in_sample_idx in range(args.per_device_train_batch_size):
+                '''
+                question과 pos passage는 1대1로 매칭이 되지만
+                hard negative sample들은 해당 question에 대해 num_neg의 수만큼 매칭이 되기 때문에
+                매 학습 루프마다 한개를 랜덤하게 뽑아서 pos passage와 concat을 하여 사용하게 됩니다.
+                '''
                 neg_batch_ids.append(
                     batch[3][:][batch_in_sample_idx][random_sampling_idx].unsqueeze(0)
                 )
@@ -164,9 +165,6 @@ def train_with_negative(
             if torch.cuda.is_available():
                 targets = targets.to("cuda")
 
-            # print(sim_scores)
-            # print()
-            # print(targets)
             sim_scores = F.log_softmax(sim_scores, dim=1)
             loss = F.nll_loss(sim_scores, targets)
             train_loss += loss.item()
