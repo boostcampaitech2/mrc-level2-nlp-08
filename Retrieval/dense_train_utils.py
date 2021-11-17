@@ -108,9 +108,10 @@ class InBatchNegativeRandomDatasetNoTitle(Dataset):
         # doc_id - context dict
         with open(caching_id_context_path, "rb") as f:
             wiki_id_context = pickle.load(f)
+        # doc_id - title dict
         with open(caching_id_title_path, "rb") as f:
             wiki_id_title = pickle.load(f)
-        # context - doc_id
+        # context - doc_id dict
         with open(caching_context_id_path, "rb") as f:
             wiki_context_id = pickle.load(f)
 

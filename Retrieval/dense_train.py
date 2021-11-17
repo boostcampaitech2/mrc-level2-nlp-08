@@ -24,7 +24,6 @@ def to_cuda(batch):
 def train_with_negative(
     args, p_encoder, q_encoder, train_dataset, valid_dataset, num_neg
 ):
-    # Dataloader
     wandb.login()
     wandb.init(
         project="retrieval_aug",
@@ -160,7 +159,7 @@ def train_with_negative(
                 q_outputs, torch.transpose(p_outputs, 0, 1)
             )  # (batch_size, emb_dim) x (emb_dim, batch_size * 2) = (batch_size, batch_size * 2)
 
-            # target: position of positive samples = diagonal element
+            # 정답은 대각선의 성분들 -> 0 1 2 ... batch_size - 1
             targets = torch.arange(0, args.per_device_train_batch_size).long()
             if torch.cuda.is_available():
                 targets = targets.to("cuda")
@@ -191,7 +190,8 @@ def train_with_negative(
                         q_encoder.eval()
                         p_encoder.eval()
 
-                        cur_batch_size = batch[0].size()[0]  # 마지막 배치 때문에
+                        cur_batch_size = batch[0].size()[0]  
+                        # 마지막 배치의 drop last를 안하기 때문에 단순 batch_size를 사용하면 에러발생
                         if torch.cuda.is_available():
                             batch = tuple(t.cuda() for t in batch)
                         p_inputs = {
