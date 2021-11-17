@@ -102,9 +102,9 @@ def train_with_negative(
     q_encoder.zero_grad()
     torch.cuda.empty_cache()
 
-    best_loss = 9999  # valid_loss
-    best_acc = -1
-    num_epoch = 0
+    best_loss = 9999  # valid_loss를 저장하는 변수
+    best_acc = -1 # acc를 저장하는 변수
+    num_epoch = 0 
 
     for _ in range(int(args.num_train_epochs)):
         epoch_iterator = tqdm(train_dataloader, desc="Iteration")
@@ -232,6 +232,8 @@ def train_with_negative(
                 print(f"valid acc: {valid_acc}")
                 wandb.log({"valid loss": valid_loss, "valid acc": valid_acc})
                 if best_loss > valid_loss:
+                    # valid_loss가 작아질 때만 저장하고 best_loss와 best_acc를 업데이트
+                    # acc에 대해서도 가능합니다.
                     print("best model save")
                     p_encoder.save_pretrained(args.output_dir + "/p_encoder")
                     q_encoder.save_pretrained(args.output_dir + "/q_encoder")
@@ -245,7 +247,6 @@ def train_with_negative(
         print(f"train loss: {train_loss}")
         print(f"train acc: {train_acc}")
 
-        # valid_loss가 작아질 때만 저장
     wandb.finish()
     return p_encoder, q_encoder
 
