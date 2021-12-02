@@ -24,16 +24,19 @@ from models.frozen_head import FrozenHeadModel
 
 def train(settings, args):
     args.config = AutoConfig.from_pretrained(settings.pretrained_model_name_or_path)
-    args.tokenizer = AutoTokenizer.from_pretrained(settings.pretrained_model_name_or_path)
+    args.tokenizer = AutoTokenizer.from_pretrained(
+        settings.pretrained_model_name_or_path
+    )
     model = AutoModelForQuestionAnswering.from_pretrained(
         settings.pretrained_model_name_or_path, config=args.config
     )
 
     data_collator = DataCollatorWithPadding(
-        tokenizer=args.tokenizer, pad_to_multiple_of=args.pad_to_multiple_of if args.fp16 else None
+        tokenizer=args.tokenizer,
+        pad_to_multiple_of=args.pad_to_multiple_of if args.fp16 else None,
     )
     args.dataset = load_from_disk(settings.trainset_path)
-    train_dataset = args.dataset["train"]
+    train_dataset = args.dataset["train_concat_dataset"]
 
     column_names = train_dataset.column_names
     train_dataset = train_dataset.map(
@@ -69,19 +72,10 @@ def train(settings, args):
     else:
         trainer.train()
     trainer.save_model()
-    # trainer.evaluate()
 
 
 if __name__ == "__main__":
     os.environ["WANDB_DISABLED"] = "true"
-
-    # wandb.init(
-    #     project="MRC_aeda",
-    #     entity="chungye-mountain-sherpa",
-    #     # name="topk_5_with_lstm_layers",
-    #     name="sota_train_with_cnn_and_lstm_head",
-    #     group="qg_dataset",
-    # )
 
     parser = HfArgumentParser((SettingsArguments, Arguments))
     settings, args = parser.parse_args_into_dataclasses()
