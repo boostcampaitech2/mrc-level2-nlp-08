@@ -1,16 +1,20 @@
 import torch
 from torch.utils.data import (DataLoader, RandomSampler)
+from torch.nn import MSELoss
+
 from transformers import AdamW, get_linear_schedule_with_warmup
-import torch.nn.functional as F
+from transformers import AutoTokenizer
 
 from tqdm import trange, tqdm
 
 import pickle
 
-def train(args, train_dataset,  val_q_seqs, val_p_seqs, validation_document, test_q_seqs, wiki, p_model, q_model):
-    
+from scipy.stats import pearsonr
+
+def train(args, train_dataset, validation_data, validation_labels, sen_encoder, model_checkpoint):
+
     # logging
-    best_acc = 0
+    best_cor = 0
     stop_counter = 0 
 
     # Dataloader
@@ -20,10 +24,8 @@ def train(args, train_dataset,  val_q_seqs, val_p_seqs, validation_document, tes
     # Optimizer
     no_decay = ['bias', 'LayerNorm.weight']
     optimizer_grouped_parameters = [
-          {'params': [p for n, p in p_model.named_parameters() if not any(nd in n for nd in no_decay)], 'weight_decay': args.weight_decay},
-          {'params': [p for n, p in p_model.named_parameters() if any(nd in n for nd in no_decay)], 'weight_decay': 0.0},
-          {'params': [p for n, p in q_model.named_parameters() if not any(nd in n for nd in no_decay)], 'weight_decay': args.weight_decay},
-          {'params': [p for n, p in q_model.named_parameters() if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
+          {'params': [p for n, p in sen_encoder.named_parameters() if not any(nd in n for nd in no_decay)], 'weight_decay': args.weight_decay},
+          {'params': [p for n, p in sen_encoder.named_parameters() if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
           ]
     optimizer = AdamW(optimizer_grouped_parameters, lr=args.lr, eps=args.adam_epsilon)
     t_total = len(train_dataloader) // args.gradient_accumulation_steps * args.num_epochs
@@ -32,8 +34,7 @@ def train(args, train_dataset,  val_q_seqs, val_p_seqs, validation_document, tes
     # Start training!
     global_step = 0
     
-    p_model.zero_grad()
-    q_model.zero_grad()
+    sen_encoder.zero_grad()
     torch.cuda.empty_cache()
     
     train_iterator = trange(int(args.num_epochs), desc="Epoch")
@@ -46,38 +47,27 @@ def train(args, train_dataset,  val_q_seqs, val_p_seqs, validation_document, tes
 
         print(f"**********Train: epoch {epoch}**********")
         for step, batch in enumerate(epoch_iterator):
-            q_model.train()
-            p_model.train()
             
-            targets = torch.zeros(args.train_bs).long()
+            sen_encoder.train()
+            
+            
             if torch.cuda.is_available():
                 batch = tuple(t.cuda() for t in batch)
-                targets = targets.cuda()
 
-            p_inputs = {'input_ids': batch[0].view(
-                                          args.train_bs*(args.num_neg+1), -1),
-                        'attention_mask': batch[1].view(
-                                          args.train_bs*(args.num_neg+1), -1),
-                        'token_type_ids': batch[2].view(
-                                          args.train_bs*(args.num_neg+1), -1)
-                        }
-            
-            q_inputs = {'input_ids': batch[3],
-                        'attention_mask': batch[4],
-                        'token_type_ids': batch[5]}
+            inputs = {'input_ids_1': batch[0],
+                        'input_ids_2': batch[1],
+                        'attention_mask_1': batch[2],
+                        'attention_mask_2': batch[3]
+                       }
 
-            p_outputs = p_model(**p_inputs)  #(batch_size*(num_neg+1), emb_dim) -> 16, 756
-            q_outputs = q_model(**q_inputs)  #(batch_size*, emb_dim) -> 4, 756
+            print(inputs['input_ids_1'])
+            break
+            targets = batch[4]
+            cos_sim_outputs = (sen_encoder(**inputs) * (5/2)) + 2.5
 
-            # Calculate similarity score & loss
-            p_outputs = torch.transpose(p_outputs.view(args.train_bs, args.num_neg+1,-1),1,2) # (batch_size, emb_dim, num_neg+1)
-            q_outputs = q_outputs.view(args.train_bs, 1, -1) # (batch_size,1,emb_dim) -> 4, 1, 756
-
-            sim_scores = torch.bmm(q_outputs, p_outputs).squeeze()  #(batch_size, num_neg+1)
-            sim_scores = sim_scores.view(args.train_bs, -1)
-            sim_scores = F.log_softmax(sim_scores, dim=1)
-
-            train_loss = F.nll_loss(sim_scores, targets)
+            # loss
+            criterion = MSELoss()
+            train_loss = criterion(cos_sim_outputs, targets)
             train_loss_list.append(train_loss.detach().cpu().numpy())
 
             # print loss every 1000 steps
@@ -91,8 +81,7 @@ def train(args, train_dataset,  val_q_seqs, val_p_seqs, validation_document, tes
             if ((step + 1) % args.gradient_accumulation_steps == 0) or (step + 1 == len(epoch_iterator)):
                 optimizer.step()
                 scheduler.step()
-                q_model.zero_grad()
-                p_model.zero_grad()
+                sen_encoder.zero_grad()
 
             global_step += 1
             
@@ -100,46 +89,25 @@ def train(args, train_dataset,  val_q_seqs, val_p_seqs, validation_document, tes
         
         print("**********EVALUATION**********")
         with torch.no_grad():
-            p_model.eval()
-            q_model.eval()
-            
-            q_emb = q_model(**val_q_seqs).to('cpu')  #(num_query, emb_dim)
+            sen_encoder.eval()
+            sen_encoder.eval()
+
+            print(val_dataset[0])
+            ## validation_data
+            val_u_seqs = tokenizer(validation_data['sentence1'], padding="max_length", truncation=True, return_tensors='pt').to('cuda')
+            val_v_seqs = tokenizer(validation_data['sentence2'], padding="max_length", truncation=True, return_tensors='pt').to('cuda')
+
+            val_outputs = val_dataset[4]
+
+            val_cos_sim = (sen_encoder(**val_inputs)*5/2-2.5).to('cpu')  #(num_query, emb_dim)
                 
-            p_embs = []
-            for i in tqdm(range(len(val_p_seqs))):
-                p = val_p_seqs[i].to('cuda')
-                p_emb = p_model(**p).to('cpu').numpy()
-                p_embs.append(p_emb)
+        pearson_cor = pearsonr(val_outputs, val_cos_sim)
 
-        p_embs = torch.Tensor(p_embs).squeeze()
-        dot_prod_scores = torch.matmul(q_emb, torch.transpose(p_embs, 0, 1))
-        rank = torch.argsort(dot_prod_scores, dim=1, descending=True).squeeze()
-
-        print("**********Inference**********")        
-        with torch.no_grad():            
-            test_q_emb = q_model(**test_q_seqs).to('cpu')  #(num_query, emb_dim)
-            test_dot_prod_scores = torch.matmul(test_q_emb, torch.transpose(p_embs, 0, 1))
-
-        # print accuracy
-        counter = 0
-        for i in range(len(rank)):
-            if validation_document[i] == wiki[rank[i][0]]:
-                counter += 1
-
-        acc  = counter / len(rank)
-
-        if acc > best_acc:
+        if pearson_cor > best_cor:
             stop_counter = 0
-            best_acc = acc
+            best_cor = pearson_cor
         
-            torch.save(p_model, f'checkpoints/val_acc{acc:4.2%}_p_encoder.pt')
-            torch.save(q_model, f'checkpoints/val_acc{acc:4.2%}_q_encoder.pt')
-
-            with open(f"scores/val_retreival_scores_{acc:4.2%}", "wb") as file:
-                pickle.dump(dot_prod_scores, file)
-
-            with open(f"scores/test_retreival_scores_{acc:4.2%}", "wb") as file:
-                pickle.dump(test_dot_prod_scores, file)
+            torch.save(sen_encoder, f'checkpoints/val_acc{pearson_cor:4.2%}_p_encoder.pt')
                 
         else:
             stop_counter += 1
@@ -147,5 +115,5 @@ def train(args, train_dataset,  val_q_seqs, val_p_seqs, validation_document, tes
             if args.early_stop == stop_counter:
                 break
 
-        print("epoch acc:", acc)
-        print("best acc from all epochs", best_acc)
+        print("epoch pearson correaltion:", pearsonr)
+        print("best cor from all epochs", best_cor)
